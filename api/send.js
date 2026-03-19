@@ -8,7 +8,7 @@ const DESTINATARIOS = [
       'jaumejr@premierpigs.com',
       ];
 
-      const LABELS = {
+      const LABELS = {h
         num_machos:               'Número de machos',
           num_cerdas:               'Número de cerdas',
             num_primerizas:           'Número de primerizas',
@@ -98,7 +98,7 @@ const DESTINATARIOS = [
                                                                                                                                                                                                                                               
                                                                                                                                                                                                                                                 try {
                                                                                                                                                                                                                                                     await resend.emails.send({
-                                                                                                                                                                                                                                                          from:    'Final de Mes <noreply@premierpigs.com>',
+                                                                                                                                                                                                                                                          from:    'Final de Mes <onboarding@resend.dev>',
                                                                                                                                                                                                                                                                 to:      DESTINATARIOS,
                                                                                                                                                                                                                                                                       subject: `Final de Mes — ${data.granja} — ${data.mes}`,
                                                                                                                                                                                                                                                                             html:    buildHtml(data),
