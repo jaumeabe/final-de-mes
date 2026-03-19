@@ -8,7 +8,7 @@ const DESTINATARIOS = [
       'jaumejr@premierpigs.com',
       ];
 
-      const LABELS = {h
+      const LABELS = {
         num_machos:               'Número de machos',
           num_cerdas:               'Número de cerdas',
             num_primerizas:           'Número de primerizas',
