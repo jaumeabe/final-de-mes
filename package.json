@@ -1,9 +1,11 @@
 {
-    "name": "final-de-mes",
-    "version": "1.0.0",
-    "private": true,
-    "type": "module",
-    "dependencies": {
-          "resend": "^4.0.0"
-    }
+        "name": "final-de-mes",
+        "version": "1.0.0",
+        "private": true,
+        "type": "module",
+        "dependencies": {
+                    "@vercel/kv": "^2.0.0",
+                    "exceljs": "^4.4.0",
+                    "resend": "^4.0.0"
+        }
 }
