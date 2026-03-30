@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Final de Mes Granja</title>
+<style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 30px 16px;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      max-width: 620px;
+      width: 100%;
+      padding: 36px 36px 40px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 1.45rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #1a3a5c;
+      margin-bottom: 28px;
+      text-transform: uppercase;
+    }
+
+    .header-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #4a6080;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    select, input[type="text"], input[type="number"], input[type="month"] {
+      border: 1px solid #c5d1de;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.95rem;
+      color: #1a3a5c;
+      background: #f7f9fc;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: #2e7dd1;
+      box-shadow: 0 0 0 3px rgba(46,125,209,0.12);
+      background: #fff;
+    }
+
+    .section-title {
+      background: #1a3a5c;
+      color: #fff;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 7px 14px;
+      border-radius: 5px;
+      margin: 22px 0 10px;
+    }
+
+    .form-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .form-table tr:nth-child(even) td {
+      background: #f7f9fc;
+    }
+
+    .form-table td {
+      padding: 7px 10px;
+      border-bottom: 1px solid #e8edf3;
+      vertical-align: middle;
+    }
+
+    .form-table td:first-child {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #2c4a6e;
+      width: 65%;
+    }
+
+    .form-table td:last-child {
+      width: 35%;
+    }
+
+    .form-table input[type="number"] {
+      text-align: right;
+      padding: 5px 8px;
+      font-size: 0.9rem;
+    }
+
+    .note {
+      font-size: 0.73rem;
+      color: #7a8fa8;
+      font-style: italic;
+      padding: 4px 0 2px 10px;
+    }
+
+    .btn-submit {
+      display: block;
+      width: 100%;
+      margin-top: 30px;
+      padding: 13px;
+      background: #1a3a5c;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background 0.2s;
+    }
+
+    .btn-submit:hover {
+      background: #2e5c94;
+    }
+
+    .btn-reset {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      background: transparent;
+      color: #7a8fa8;
+      border: 1px solid #c5d1de;
+      border-radius: 7px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      letter-spacing: 0.03em;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .btn-reset:hover {
+      background: #f0f2f5;
+      color: #1a3a5c;
+    }
+
+    .btn-submit:disabled {
+      background: #7a9cbf;
+      cursor: not-allowed;
+    }
+
+    .msg {
+      margin-top: 16px;
+      padding: 12px 16px;
+      border-radius: 7px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-align: center;
+      display: none;
+    }
+    .msg.success {
+      background: #e6f4ea;
+      color: #1e6b3a;
+      border: 1px solid #a8d5b5;
+    }
+    .msg.error {
+      background: #fdecea;
+      color: #b71c1c;
+      border: 1px solid #f5a8a8;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div style="text-align:center; margin-bottom:16px;">
+    <img src="/public/Logo%20vermell%20final%20sense%20fondo.png" alt="Logo Premier Pigs" style="max-height:80px; width:auto;" />
+  </div>
+  <h1>Final de Mes &mdash; Granja</h1>
+
+  <form id="finalMesForm">
+
+    <!-- GRANJA + MES -->
+    <div class="header-row">
+      <div class="field-group">
+        <label for="granja">Granja</label>
+        <select id="granja" name="granja" required>
+          <option value="" disabled selected>Seleccionar granja...</option>
+          <option>PORCELIBOR</option>
+          <option>CASTELLNOU</option>
+          <option>PI</option>
+          <option>SISALLAR 1</option>
+          <option>SENTERADA</option>
+          <option>SISALLAR 3</option>
+          <option>CASERIO</option>
+          <option>MASIA</option>
+          <option>GRANADELLA</option>
+          <option>FAYON ABUELA</option>
+          <option>INDUSTRIAL</option>
+          <option>CARTUJA 2</option>
+          <option>MARRUGAT</option>
+          <option>SINOGA</option>
+          <option>PASCUALET</option>
+          <option>NOVIPORCI</option>
+          <option>LES SERRES</option>
+          <option>ALFUSPI</option>
+          <option>FUSTERO</option>
+          <option>GUINEU</option>
+          <option>SANTA ROSA</option>
+          <option>GIRALT</option>
+          <option>EL SOLER</option>
+          <option>VENDRELL</option>
+          <option>PORDALL</option>
+          <option>RUBIO</option>
+          <option>ESCODA</option>
+          <option>CARTUJA 1</option>
+          <option>PORDECONA</option>
+          <option>SISALLAR 4</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label for="mes">Mes</label>
+        <input type="month" id="mes" name="mes" required />
+      </div>
+    </div>
+
+    <!-- INVENTARIO -->
+    <div class="section-title">Inventario</div>
+    <table class="form-table">
+      <tr><td>Número de machos</td><td><input type="number" name="num_machos" min="0" /></td></tr>
+      <tr><td>Número de cerdas</td><td><input type="number" name="num_cerdas" min="0" /></td></tr>
+      <tr><td>Número de primerizas</td><td><input type="number" name="num_primerizas" min="0" /></td></tr>
+      <tr><td>Lechones maternidad</td><td><input type="number" name="lechones_maternidad" min="0" /></td></tr>
+      <tr><td>Lechones destete</td><td><input type="number" name="lechones_destete" min="0" /></td></tr>
+    </table>
+
+    <!-- ENTRADAS -->
+    <div class="section-title">Entradas</div>
+    <table class="form-table">
+      <tr><td>Número primerizas entradas</td><td><input type="number" name="primerizas_entradas" min="0" /></td></tr>
+      <tr><td>Acumulado primerizas</td><td><input type="number" name="acumulado_primerizas" min="0" /></td></tr>
+      <tr><td>Número machos entrados</td><td><input type="number" name="machos_entrados" min="0" /></td></tr>
+    </table>
+
+    <!-- VENTAS -->
+    <div class="section-title">Ventas</div>
+    <table class="form-table">
+      <tr><td>Venta cerdas</td><td><input type="number" name="venta_cerdas" min="0" /></td></tr>
+      <tr><td>Acumulado venta cerdas</td><td><input type="number" name="acum_venta_cerdas" min="0" /></td></tr>
+      <tr><td>Venta primerizas</td><td><input type="number" name="venta_primerizas" min="0" /></td></tr>
+      <tr><td>Acumulado venta primerizas</td><td><input type="number" name="acum_venta_primerizas" min="0" /></td></tr>
+      <tr><td>Venta lechones parideras</td><td><input type="number" name="venta_lechones_parideras" min="0" /></td></tr>
+      <tr><td>Acumulado venta parideras</td><td><input type="number" name="acum_venta_parideras" min="0" /></td></tr>
+      <tr><td>Venta lechones destete</td><td><input type="number" name="venta_lechones_destete" min="0" /></td></tr>
+      <tr><td>Acumulado venta destete</td><td><input type="number" name="acum_venta_destete" min="0" /></td></tr>
+      <tr><td>Venta tostones</td><td><input type="number" name="venta_tostones" min="0" /></td></tr>
+      <tr><td>Acumulado venta tostones</td><td><input type="number" name="acum_venta_tostones" min="0" /></td></tr>
+    </table>
+
+    <!-- MUERTES -->
+    <div class="section-title">Muertes</div>
+    <table class="form-table">
+      <tr><td>Muerte cerdas</td><td><input type="number" name="muerte_cerdas" min="0" /></td></tr>
+      <tr><td>Acumulado muerte cerdas</td><td><input type="number" name="acum_muerte_cerdas" min="0" /></td></tr>
+      <tr><td>Muerte primerizas</td><td><input type="number" name="muerte_primerizas" min="0" /></td></tr>
+      <tr><td>Acumulado muerte primerizas</td><td><input type="number" name="acum_muerte_primerizas" min="0" /></td></tr>
+    </table>
+
+    <!-- PARTOS Y DESTETE -->
+    <div class="section-title">Partos y Destete</div>
+    <table class="form-table">
+      <tr><td>Número de partos</td><td><input type="number" name="num_partos" min="0" /></td></tr>
+      <tr><td>Lechones nacidos vivos</td><td><input type="number" name="lechones_nacidos_vivos" min="0" /></td></tr>
+      <tr><td>Promedio lechones nacidos vivos</td><td><input type="number" name="prom_nacidos_vivos" min="0" step="0.01" /></td></tr>
+      <tr><td>Número cerdas destetadas</td><td><input type="number" name="cerdas_destetadas" min="0" /></td></tr>
+      <tr><td>Lechones destetados</td><td><input type="number" name="lechones_destetados" min="0" /></td></tr>
+      <tr><td>Promedio lechones destetados</td><td><input type="number" name="prom_destetados" min="0" step="0.01" /></td></tr>
+    </table>
+
+    <!-- CUBRICIONES -->
+    <div class="section-title">Cubriciones</div>
+    <table class="form-table">
+      <tr><td>Cubriciones totales</td><td><input type="number" name="cubriciones_totales" min="0" /></td></tr>
+      <tr>
+        <td>
+          Cubriciones origen conflictivo
+          <div class="note">* más de 7 días destetadas, abortadas, negativas de ecógrafo</div>
+        </td>
+        <td><input type="number" name="cubriciones_conflictivo" min="0" /></td>
+      </tr>
+      <tr><td>Cubiertas por primera vez</td><td><input type="number" name="cubiertas_primera_vez" min="0" /></td></tr>
+    </table>
+
+    <!-- BAJAS -->
+    <div class="section-title">Bajas</div>
+    <table class="form-table">
+      <tr><td>Bajas destete</td><td><input type="number" name="bajas_destete" min="0" /></td></tr>
+      <tr><td>Bajas parideras al mes</td><td><input type="number" name="bajas_parideras" min="0" /></td></tr>
+    </table>
+
+    <button type="submit" class="btn-submit" id="btnGuardar">Guardar</button>
+    <button type="reset" class="btn-reset">Limpiar formulario</button>
+    <div class="msg" id="msgOk">Formulario enviado correctamente a todos los destinatarios.</div>
+    <div class="msg" id="msgErr">Error al enviar. Comprueba la configuración de EmailJS.</div>
+
+  </form>
+</div>
+
+<script>
+  document.getElementById('finalMesForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const data   = Object.fromEntries(new FormData(this).entries());
+    const btn    = document.getElementById('btnGuardar');
+    const msgOk  = document.getElementById('msgOk');
+    const msgErr = document.getElementById('msgErr');
+
+    msgOk.style.display = 'none';
+    msgErr.style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+
+    try {
+      const res = await fetch('/api/send', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Error del servidor');
+      msgOk.style.display = 'block';
+      this.reset();
+    } catch (err) {
+      console.error('Error:', err);
+      msgErr.style.display = 'block';
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Guardar';
+    }
+  });
+</script>
+</body>
+</html>
