@@ -28,10 +28,11 @@ function getMonthLabel(mesKey) {
   return `${meses[parseInt(m, 10) - 1]} ${y}`;
 }
 
-function getCurrentMonthKey() {
+function getPreviousMonthKey() {
   const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
   return `${y}-${m}`;
 }
 
@@ -118,8 +119,15 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'No autorizado' });
   }
 
-  const mesKey = req.query.mes || getCurrentMonthKey();
-  const rows = await sql`SELECT granja, data FROM inventario WHERE mes = ${mesKey}`;
+  const mesKey = req.query.mes || getPreviousMonthKey();
+
+  let rows;
+  try {
+    rows = await sql`SELECT granja, data FROM inventario WHERE mes = ${mesKey}`;
+  } catch (dbErr) {
+    console.error('Error consultando DB:', dbErr);
+    return res.status(500).json({ error: 'Error al consultar la base de datos' });
+  }
 
   if (!rows || rows.length === 0) {
     return res.status(200).json({ ok: true, message: 'No hay datos para este mes' });
