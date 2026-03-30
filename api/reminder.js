@@ -43,7 +43,13 @@ export default async function handler(req, res) {
   const mesKey = req.query.mes || getPreviousMonthKey();
   const mesLabel = getMonthLabel(mesKey);
 
-  const rows = await sql`SELECT DISTINCT granja FROM inventario WHERE mes = ${mesKey}`;
+  let rows;
+  try {
+    rows = await sql`SELECT DISTINCT granja FROM inventario WHERE mes = ${mesKey}`;
+  } catch (dbErr) {
+    console.error('Error consultando DB:', dbErr);
+    return res.status(500).json({ error: 'Error al consultar la base de datos' });
+  }
   const reportadas = rows.map(r => r.granja);
   const pendientes = TODAS_GRANJAS.filter(g => !reportadas.includes(g));
 

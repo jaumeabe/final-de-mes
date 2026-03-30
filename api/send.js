@@ -11,6 +11,14 @@ const DESTINATARIOS = [
 
 const TOTAL_GRANJAS = 30;
 
+const GRANJAS_VALIDAS = [
+  'PORCELIBOR','CASTELLNOU','PI','SISALLAR 1','SENTERADA','SISALLAR 3',
+  'CASERIO','MASIA','GRANADELLA','FAYON ABUELA','INDUSTRIAL','CARTUJA 2',
+  'MARRUGAT','SINOGA','PASCUALET','NOVIPORCI','LES SERRES','ALFUSPI',
+  'FUSTERO','GUINEU','SANTA ROSA','GIRALT','EL SOLER','VENDRELL',
+  'PORDALL','RUBIO','ESCODA','CARTUJA 1','PORDECONA','SISALLAR 4',
+];
+
 const LABELS = {
   num_machos:               'Número de machos',
   num_cerdas:               'Número de cerdas',
@@ -200,6 +208,35 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Faltan campos obligatorios' });
   }
 
+  if (!GRANJAS_VALIDAS.includes(data.granja)) {
+    return res.status(400).json({ error: 'Granja no válida' });
+  }
+
+  if (!/^\d{4}-\d{2}$/.test(data.mes)) {
+    return res.status(400).json({ error: 'Formato de mes no válido' });
+  }
+
+  // Guardar en PostgreSQL
+  try {
+    await sql`
+      CREATE TABLE IF NOT EXISTS inventario (
+        id SERIAL PRIMARY KEY,
+        granja TEXT NOT NULL,
+        mes TEXT NOT NULL,
+        data JSONB NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        UNIQUE(granja, mes)
+      )`;
+    await sql`
+      INSERT INTO inventario (granja, mes, data)
+      VALUES (${data.granja}, ${data.mes}, ${JSON.stringify(data)})
+      ON CONFLICT (granja, mes)
+      DO UPDATE SET data = ${JSON.stringify(data)}, created_at = NOW()`;
+  } catch (dbErr) {
+    console.error('Error guardando en DB:', dbErr);
+    return res.status(500).json({ error: 'Error al guardar los datos' });
+  }
+
   // Generar Excel individual con los datos de la granja
   let excelIndividual;
   try {
@@ -281,27 +318,6 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error('Error enviando email:', err);
     return res.status(500).json({ error: 'Error al enviar el email' });
-  }
-
-  // Guardar en PostgreSQL
-  try {
-    await sql`
-      CREATE TABLE IF NOT EXISTS inventario (
-        id SERIAL PRIMARY KEY,
-        granja TEXT NOT NULL,
-        mes TEXT NOT NULL,
-        data JSONB NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        UNIQUE(granja, mes)
-      )`;
-    await sql`
-      INSERT INTO inventario (granja, mes, data)
-      VALUES (${data.granja}, ${data.mes}, ${JSON.stringify(data)})
-      ON CONFLICT (granja, mes)
-      DO UPDATE SET data = ${JSON.stringify(data)}, created_at = NOW()`;
-  } catch (dbErr) {
-    console.error('Error guardando en DB:', dbErr);
-    return res.status(200).json({ ok: true });
   }
 
   // Comprobar si todas las granjas han enviado este mes
