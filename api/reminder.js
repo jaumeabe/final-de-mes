@@ -4,9 +4,7 @@ import { neon } from '@neondatabase/serverless';
 const resend = new Resend(process.env.RESEND_API_KEY);
 const sql = neon(process.env.DATABASE_URL);
 
-const DESTINATARIOS = [
-  'jaumeabellana@gmail.com',
-];
+const DESTINATARIOS = (process.env.EMAIL_TO || '').split(',').map(e => e.trim()).filter(Boolean);
 
 const TODAS_GRANJAS = [
   'PORCELIBOR','CASTELLNOU','PI','SISALLAR 1','SENTERADA','SISALLAR 3',

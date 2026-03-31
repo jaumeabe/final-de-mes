@@ -5,9 +5,7 @@ import ExcelJS from 'exceljs';
 const resend = new Resend(process.env.RESEND_API_KEY);
 const sql = neon(process.env.DATABASE_URL);
 
-const DESTINATARIOS = [
-  'jaumeabellana@gmail.com',
-];
+const DESTINATARIOS = (process.env.EMAIL_TO || '').split(',').map(e => e.trim()).filter(Boolean);
 
 const EXISTENCIAS_FIELDS = [
   { key: 'num_machos', label: 'MACHOS' },
