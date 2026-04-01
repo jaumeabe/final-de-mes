@@ -43,10 +43,10 @@ async function generateExistencias(allRows, mesKey) {
   const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
     'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 
-  const headerFont = { bold: true, size: 12, name: 'Arial', color: { argb: 'FFFFFFFF' } };
+  const headerFont = { bold: true, size: 9, name: 'Arial', color: { argb: 'FFFFFFFF' } };
   const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A3A5C' } };
-  const labelFont = { bold: true, size: 11, name: 'Arial' };
-  const dataFont = { size: 11, name: 'Arial' };
+  const labelFont = { bold: true, size: 9, name: 'Arial' };
+  const dataFont = { size: 9, name: 'Arial' };
   const borderThin = {
     top: { style: 'thin', color: { argb: 'FFB0B0B0' } },
     bottom: { style: 'thin', color: { argb: 'FFB0B0B0' } },
@@ -54,16 +54,19 @@ async function generateExistencias(allRows, mesKey) {
     right: { style: 'thin', color: { argb: 'FFB0B0B0' } },
   };
 
-  ws.getColumn(1).width = 24;
-  for (let i = 2; i <= 13; i++) ws.getColumn(i).width = 14;
+  ws.pageSetup = { fitToPage: true, fitToWidth: 1, fitToHeight: 1, orientation: 'landscape' };
+  ws.properties.defaultRowHeight = 15;
+
+  ws.getColumn(1).width = 20;
+  for (let i = 2; i <= 13; i++) ws.getColumn(i).width = 10;
 
   // Fila 1: Título
   const titleRow = ws.getRow(1);
   titleRow.getCell(2).value = `EXISTENCIAS ${year}`;
-  titleRow.getCell(2).font = { bold: true, size: 14, name: 'Arial', color: { argb: 'FF1A3A5C' } };
+  titleRow.getCell(2).font = { bold: true, size: 11, name: 'Arial', color: { argb: 'FF1A3A5C' } };
   ws.mergeCells('B1:M1');
   titleRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
-  titleRow.height = 28;
+  titleRow.height = 20;
 
   // Fila 2: Meses
   const monthRow = ws.getRow(2);
@@ -75,7 +78,7 @@ async function generateExistencias(allRows, mesKey) {
     cell.alignment = { horizontal: 'center', vertical: 'middle' };
     cell.border = borderThin;
   }
-  monthRow.height = 22;
+  monthRow.height = 18;
 
   // Sumar valores de todas las granjas
   const totals = {};

@@ -125,10 +125,10 @@ async function generateExistencias(allRows, mesKey) {
   const meses = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO',
     'JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];
 
-  const headerFont = { bold: true, size: 12, name: 'Arial', color: { argb: 'FFFFFFFF' } };
+  const headerFont = { bold: true, size: 9, name: 'Arial', color: { argb: 'FFFFFFFF' } };
   const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A3A5C' } };
-  const labelFont = { bold: true, size: 11, name: 'Arial' };
-  const dataFont = { size: 11, name: 'Arial' };
+  const labelFont = { bold: true, size: 9, name: 'Arial' };
+  const dataFont = { size: 9, name: 'Arial' };
   const borderThin = {
     top: { style: 'thin', color: { argb: 'FFB0B0B0' } },
     bottom: { style: 'thin', color: { argb: 'FFB0B0B0' } },
@@ -136,17 +136,19 @@ async function generateExistencias(allRows, mesKey) {
     right: { style: 'thin', color: { argb: 'FFB0B0B0' } },
   };
 
-  // Columna A ancho
-  ws.getColumn(1).width = 24;
-  for (let i = 2; i <= 13; i++) ws.getColumn(i).width = 14;
+  ws.pageSetup = { fitToPage: true, fitToWidth: 1, fitToHeight: 1, orientation: 'landscape' };
+  ws.properties.defaultRowHeight = 15;
+
+  ws.getColumn(1).width = 20;
+  for (let i = 2; i <= 13; i++) ws.getColumn(i).width = 10;
 
   // Fila 1: Título EXISTENCIAS + año
   const titleRow = ws.getRow(1);
   titleRow.getCell(2).value = `EXISTENCIAS ${year}`;
-  titleRow.getCell(2).font = { bold: true, size: 14, name: 'Arial', color: { argb: 'FF1A3A5C' } };
+  titleRow.getCell(2).font = { bold: true, size: 11, name: 'Arial', color: { argb: 'FF1A3A5C' } };
   ws.mergeCells('B1:M1');
   titleRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
-  titleRow.height = 28;
+  titleRow.height = 20;
 
   // Fila 2: Meses
   const monthRow = ws.getRow(2);
@@ -158,7 +160,7 @@ async function generateExistencias(allRows, mesKey) {
     cell.alignment = { horizontal: 'center', vertical: 'middle' };
     cell.border = borderThin;
   }
-  monthRow.height = 22;
+  monthRow.height = 18;
 
   // Sumar los valores de todas las granjas para este mes
   const totals = {};
@@ -241,10 +243,10 @@ export default async function handler(req, res) {
     const wb = new ExcelJS.Workbook();
     const ws = wb.addWorksheet('Final de Mes');
 
-    const headerFont = { bold: true, size: 11, name: 'Arial', color: { argb: 'FFFFFFFF' } };
+    const headerFont = { bold: true, size: 8, name: 'Arial', color: { argb: 'FFFFFFFF' } };
     const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A3A5C' } };
-    const labelFont = { size: 11, name: 'Arial' };
-    const valueFont = { bold: true, size: 11, name: 'Arial' };
+    const labelFont = { size: 8, name: 'Arial' };
+    const valueFont = { bold: true, size: 8, name: 'Arial' };
     const borderThin = {
       top: { style: 'thin', color: { argb: 'FFB0B0B0' } },
       bottom: { style: 'thin', color: { argb: 'FFB0B0B0' } },
@@ -252,20 +254,23 @@ export default async function handler(req, res) {
       right: { style: 'thin', color: { argb: 'FFB0B0B0' } },
     };
 
-    ws.getColumn(1).width = 30;
-    ws.getColumn(2).width = 20;
+    ws.pageSetup = { fitToPage: true, fitToWidth: 1, fitToHeight: 1, orientation: 'portrait' };
+    ws.properties.defaultRowHeight = 13;
+
+    ws.getColumn(1).width = 26;
+    ws.getColumn(2).width = 14;
 
     // Título
     ws.getRow(1).getCell(1).value = `Final de Mes — ${data.granja}`;
-    ws.getRow(1).getCell(1).font = { bold: true, size: 14, name: 'Arial', color: { argb: 'FF1A3A5C' } };
+    ws.getRow(1).getCell(1).font = { bold: true, size: 11, name: 'Arial', color: { argb: 'FF1A3A5C' } };
     ws.mergeCells('A1:B1');
-    ws.getRow(1).height = 28;
+    ws.getRow(1).height = 20;
 
     ws.getRow(2).getCell(1).value = `Mes: ${data.mes}`;
-    ws.getRow(2).getCell(1).font = { size: 11, name: 'Arial', color: { argb: 'FF4A6080' } };
-    ws.getRow(2).height = 20;
+    ws.getRow(2).getCell(1).font = { size: 9, name: 'Arial', color: { argb: 'FF4A6080' } };
+    ws.getRow(2).height = 15;
 
-    let rowIdx = 4;
+    let rowIdx = 3;
     for (const section of SECTIONS) {
       const sectionRow = ws.getRow(rowIdx);
       sectionRow.getCell(1).value = section.title;
@@ -287,7 +292,6 @@ export default async function handler(req, res) {
         r.getCell(2).border = borderThin;
         rowIdx++;
       }
-      rowIdx++; // fila vacía entre secciones
     }
 
     const buf = await wb.xlsx.writeBuffer();
