@@ -21,6 +21,7 @@ const LABELS = {
   num_machos:               'Número de machos',
   num_cerdas:               'Número de cerdas',
   num_primerizas:           'Número de primerizas',
+  total_cerdas_primerizas:  'Total',
   lechones_maternidad:      'Lechones maternidad',
   lechones_destete:         'Lechones destete',
   primerizas_entradas:      'Nº primerizas entradas',
@@ -46,6 +47,7 @@ const LABELS = {
   cerdas_destetadas:        'Cerdas destetadas',
   lechones_destetados:      'Lechones destetados',
   prom_destetados:          'Promedio destetados',
+  entrados_destete_propio:  'Entrados en destete propio',
   cubriciones_totales:      'Cubriciones totales',
   cubriciones_conflictivo:  'Cubriciones origen conflictivo',
   cubiertas_primera_vez:    'Cubiertas por primera vez',
@@ -54,13 +56,12 @@ const LABELS = {
 };
 
 const SECTIONS = [
-  { title: 'INVENTARIO',       fields: ['num_machos','num_cerdas','num_primerizas','lechones_maternidad','lechones_destete'] },
+  { title: 'INVENTARIO',       fields: ['num_machos','num_cerdas','num_primerizas','total_cerdas_primerizas','lechones_maternidad','lechones_destete'] },
   { title: 'ENTRADAS',         fields: ['primerizas_entradas','acumulado_primerizas','machos_entrados'] },
   { title: 'VENTAS',           fields: ['venta_cerdas','acum_venta_cerdas','venta_primerizas','acum_venta_primerizas','venta_lechones_parideras','acum_venta_parideras','venta_lechones_destete','acum_venta_destete','venta_tostones','acum_venta_tostones'] },
-  { title: 'MUERTES',          fields: ['muerte_cerdas','acum_muerte_cerdas','muerte_primerizas','acum_muerte_primerizas'] },
-  { title: 'PARTOS Y DESTETE', fields: ['num_partos','lechones_nacidos_vivos','prom_nacidos_vivos','cerdas_destetadas','lechones_destetados','prom_destetados'] },
+  { title: 'PARTOS Y DESTETE', fields: ['num_partos','lechones_nacidos_vivos','prom_nacidos_vivos','cerdas_destetadas','lechones_destetados','prom_destetados','entrados_destete_propio'] },
   { title: 'CUBRICIONES',      fields: ['cubriciones_totales','cubriciones_conflictivo','cubiertas_primera_vez'] },
-  { title: 'BAJAS',            fields: ['bajas_destete','bajas_parideras'] },
+  { title: 'MUERTES Y BAJAS',  fields: ['muerte_cerdas','acum_muerte_cerdas','muerte_primerizas','acum_muerte_primerizas','bajas_destete','bajas_parideras'] },
 ];
 
 // Campos del Excel EXISTENCIAS (filas 3-7 del Excel original)
@@ -214,6 +215,11 @@ export default async function handler(req, res) {
 
   if (!/^\d{4}-\d{2}$/.test(data.mes)) {
     return res.status(400).json({ error: 'Formato de mes no válido' });
+  }
+
+  // Campos calculados automáticamente
+  data.total_cerdas_primerizas = (Number(data.num_cerdas) || 0) + (Number(data.num_primerizas) || 0);
+  data.entrados_destete_propio = (Number(data.lechones_destetados) || 0) - (Number(data.venta_lechones_parideras) || 0);
   }
 
   // Guardar en PostgreSQL
