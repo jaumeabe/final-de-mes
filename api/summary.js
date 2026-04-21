@@ -139,7 +139,7 @@ export default async function handler(req, res) {
 
   try {
     await resend.emails.send({
-      from: 'Final de Mes <onboarding@resend.dev>',
+      from: 'Final de Mes <finaldemes@premierpigs.com>',
       to: DESTINATARIOS,
       subject: `EXISTENCIAS — ${mesLabel} (${rows.length} granjas)`,
       html: `

@@ -309,7 +309,7 @@ export default async function handler(req, res) {
   // Enviar email individual con Excel adjunto
   try {
     const emailOpts = {
-      from:    'Final de Mes <onboarding@resend.dev>',
+      from:    'Final de Mes <finaldemes@premierpigs.com>',
       to:      DESTINATARIOS,
       subject: `Final de Mes — ${data.granja} — ${data.mes}`,
       html:    buildHtml(data),
@@ -340,7 +340,7 @@ export default async function handler(req, res) {
       const excelBuffer = await generateExistencias(allRows, data.mes);
 
       await resend.emails.send({
-        from: 'Final de Mes <onboarding@resend.dev>',
+        from: 'Final de Mes <finaldemes@premierpigs.com>',
         to: DESTINATARIOS,
         subject: `EXISTENCIAS — Todas las granjas — ${mesLabel}`,
         html: `
