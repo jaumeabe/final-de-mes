@@ -220,7 +220,6 @@ export default async function handler(req, res) {
   // Campos calculados automáticamente
   data.total_cerdas_primerizas = (Number(data.num_cerdas) || 0) + (Number(data.num_primerizas) || 0);
   data.entrados_destete_propio = (Number(data.lechones_destetados) || 0) - (Number(data.venta_lechones_parideras) || 0);
-  }
 
   // Guardar en PostgreSQL
   try {
