@@ -400,11 +400,11 @@ export default async function handler(req, res) {
   data.tipo = esDestete ? 'destete' : 'madres';
 
   if (esDestete) {
-    // Calculado: final_mes = existencias - salidas + entradas - bajas
-    data.final_mes = (Number(data.existencias) || 0)
-                   - (Number(data.salidas) || 0)
-                   + (Number(data.entradas) || 0)
-                   - (Number(data.bajas) || 0);
+    // Calculado: bajas = existencias - salidas + entradas - final_mes
+    data.bajas = (Number(data.existencias) || 0)
+               - (Number(data.salidas) || 0)
+               + (Number(data.entradas) || 0)
+               - (Number(data.final_mes) || 0);
   } else {
     data.total_cerdas_primerizas = (Number(data.num_cerdas) || 0) + (Number(data.num_primerizas) || 0);
     data.entrados_destete_propio = (Number(data.lechones_destetados) || 0) - (Number(data.venta_lechones_parideras) || 0);
