@@ -443,6 +443,13 @@
     });
   }
 
+  // Calcular mes anterior (YYYY-MM)
+  function getPrevMonth(mesKey) {
+    const [y, m] = mesKey.split('-').map(Number);
+    if (m === 1) return `${y - 1}-12`;
+    return `${y}-${String(m - 1).padStart(2, '0')}`;
+  }
+
   // Precargar valores guardados
   async function cargarDatosGuardados() {
     badgeLoaded.style.display = 'none';
@@ -453,19 +460,36 @@
       if (!res.ok) return;
       const json = await res.json();
       vaciarFormulario();
-      if (!json.found) return;
-      const d = json.data || {};
-      // Rellenar campos coincidentes (madres o destete)
-      Object.keys(d).forEach(k => {
-        const el = document.querySelector(`[name="${k}"]`);
-        if (el && el.tagName === 'INPUT') {
-          el.value = d[k];
+      if (json.found) {
+        const d = json.data || {};
+        // Rellenar campos coincidentes (madres o destete)
+        Object.keys(d).forEach(k => {
+          const el = document.querySelector(`[name="${k}"]`);
+          if (el && el.tagName === 'INPUT') {
+            el.value = d[k];
+          }
+        });
+        if (esDestete()) calcFinalMes();
+        else { calcTotal(); calcDestetePropio(); }
+        badgeLoaded.textContent = 'Datos guardados cargados — puedes consultar o modificar';
+        badgeLoaded.style.display = 'block';
+        return;
+      }
+      // No hay datos para este mes: si es destete, precargar Existencias del Final de mes anterior
+      if (esDestete()) {
+        const prevMes = getPrevMonth(mesInput.value);
+        const prevUrl = `/api/get?granja=${encodeURIComponent(granjaSel.value)}&mes=${encodeURIComponent(prevMes)}`;
+        const prevRes = await fetch(prevUrl);
+        if (prevRes.ok) {
+          const prevJson = await prevRes.json();
+          if (prevJson.found && prevJson.data && prevJson.data.final_mes != null && prevJson.data.final_mes !== '') {
+            document.getElementById('d_existencias').value = prevJson.data.final_mes;
+            calcFinalMes();
+            badgeLoaded.textContent = `Existencias precargadas del Final de mes anterior (${prevMes}) — puedes modificarlas`;
+            badgeLoaded.style.display = 'block';
+          }
         }
-      });
-      // Recalcular totales por si hace falta
-      if (esDestete()) calcFinalMes();
-      else { calcTotal(); calcDestetePropio(); }
-      badgeLoaded.style.display = 'block';
+      }
     } catch (err) {
       console.error('Error cargando datos guardados:', err);
     }
