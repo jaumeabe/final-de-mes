@@ -15,6 +15,18 @@ const EXISTENCIAS_FIELDS = [
   { key: 'lechones_destete', label: 'LECHONES DESTETE' },
 ];
 
+const GRANJAS_MADRES = [
+  'PORCELIBOR','CASTELLNOU','PI','SISALLAR 1','SENTERADA','SISALLAR 3',
+  'CASERIO','MASIA','GRANADELLA','FAYON ABUELA','INDUSTRIAL','CARTUJA 2',
+  'MARRUGAT','SINOGA','PASCUALET','NOVIPORCI','LES SERRES','ALFUSPI',
+  'FUSTERO','GUINEU','SANTA ROSA','GIRALT','EL SOLER','VENDRELL',
+  'PORDALL','RUBIO','ESCODA','CARTUJA 1','PORDECONA','SISALLAR 4',
+];
+
+const GRANJAS_DESTETE = [
+  'CEREALS','MAIALS','LLOBET','INGLES','ZAIDIN','JAUMANDREU','BORGES 1',
+];
+
 function getMonthColumn(mesKey) {
   return parseInt(mesKey.split('-')[1], 10) + 1;
 }
@@ -34,7 +46,7 @@ function getPreviousMonthKey() {
   return `${y}-${m}`;
 }
 
-async function generateExistencias(allRows, mesKey) {
+async function generateExistencias(madresRows, desteteRows, mesKey) {
   const wb = new ExcelJS.Workbook();
   const year = mesKey.split('-')[0];
   const ws = wb.addWorksheet(year);
@@ -80,16 +92,16 @@ async function generateExistencias(allRows, mesKey) {
   }
   monthRow.height = 18;
 
-  // Sumar valores de todas las granjas
+  // Sumar valores de todas las granjas madres
   const totals = {};
   for (const field of EXISTENCIAS_FIELDS) {
     totals[field.key] = 0;
-    for (const row of allRows) {
+    for (const row of madresRows) {
       totals[field.key] += Number(row.data[field.key]) || 0;
     }
   }
 
-  // Filas 3-7: Datos
+  // Filas 3-7: Datos madres
   EXISTENCIAS_FIELDS.forEach((field, idx) => {
     const row = ws.getRow(3 + idx);
     row.getCell(1).value = field.label;
@@ -107,6 +119,24 @@ async function generateExistencias(allRows, mesKey) {
     }
   });
 
+  // Fila adicional: DESTETE EXTERNO (suma de final_mes de las granjas destete)
+  const desteteTotal = (desteteRows || []).reduce(
+    (sum, row) => sum + (Number(row.data.final_mes) || 0), 0
+  );
+  const desteteRow = ws.getRow(3 + EXISTENCIAS_FIELDS.length);
+  desteteRow.getCell(1).value = 'DESTETE EXTERNO';
+  desteteRow.getCell(1).font = labelFont;
+  desteteRow.getCell(1).border = borderThin;
+  const desteteCell = desteteRow.getCell(col);
+  desteteCell.value = desteteTotal;
+  desteteCell.font = dataFont;
+  desteteCell.alignment = { horizontal: 'center' };
+  desteteCell.border = borderThin;
+  desteteCell.numFmt = '#,##0';
+  for (let c = 2; c <= 13; c++) {
+    desteteRow.getCell(c).border = borderThin;
+  }
+
   const buffer = await wb.xlsx.writeBuffer();
   return Buffer.from(buffer);
 }
@@ -122,30 +152,36 @@ export default async function handler(req, res) {
 
   const mesKey = req.query.mes || getPreviousMonthKey();
 
-  let rows;
+  let madresRows, desteteRows;
   try {
-    rows = await sql`SELECT granja, data FROM inventario WHERE mes = ${mesKey}`;
+    madresRows = await sql`
+      SELECT granja, data FROM inventario
+      WHERE mes = ${mesKey} AND granja = ANY(${GRANJAS_MADRES})`;
+    desteteRows = await sql`
+      SELECT granja, data FROM inventario
+      WHERE mes = ${mesKey} AND granja = ANY(${GRANJAS_DESTETE})`;
   } catch (dbErr) {
     console.error('Error consultando DB:', dbErr);
     return res.status(500).json({ error: 'Error al consultar la base de datos' });
   }
 
-  if (!rows || rows.length === 0) {
+  const totalReportadas = madresRows.length + desteteRows.length;
+  if (totalReportadas === 0) {
     return res.status(200).json({ ok: true, message: 'No hay datos para este mes' });
   }
 
   const mesLabel = getMonthLabel(mesKey);
-  const excelBuffer = await generateExistencias(rows, mesKey);
+  const excelBuffer = await generateExistencias(madresRows, desteteRows, mesKey);
 
   try {
     await resend.emails.send({
       from: 'Final de Mes <finaldemes@premierpigs.com>',
       to: DESTINATARIOS,
-      subject: `EXISTENCIAS — ${mesLabel} (${rows.length} granjas)`,
+      subject: `EXISTENCIAS — ${mesLabel} (${totalReportadas} granjas)`,
       html: `
         <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:500px;margin:0 auto;padding:24px;">
           <h2 style="color:#1a3a5c;">Existencias — ${mesLabel}</h2>
-          <p style="color:#4a6080;">Granjas reportadas: <strong>${rows.length}</strong></p>
+          <p style="color:#4a6080;">Granjas reportadas: <strong>${totalReportadas}</strong> (madres: ${madresRows.length}, destete: ${desteteRows.length})</p>
           <p style="color:#4a6080;">Adjunto el Excel de existencias con los totales sumados de todas las granjas.</p>
           <hr style="border:none;border-top:1px solid #dde3ec;margin:20px 0;" />
           <p style="font-size:12px;color:#7a8fa8;">Enviado automáticamente · Premier Pigs</p>

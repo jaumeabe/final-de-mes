@@ -284,7 +284,7 @@ async function generateExcelDestete(data) {
   return Buffer.from(buf);
 }
 
-async function generateExistencias(allRows, mesKey) {
+async function generateExistencias(madresRows, desteteRows, mesKey) {
   const wb = new ExcelJS.Workbook();
   const year = mesKey.split('-')[0];
   const ws = wb.addWorksheet(year);
@@ -331,7 +331,7 @@ async function generateExistencias(allRows, mesKey) {
   const totals = {};
   for (const field of EXISTENCIAS_FIELDS) {
     totals[field.key] = 0;
-    for (const row of allRows) {
+    for (const row of madresRows) {
       const val = Number(row.data[field.key]) || 0;
       totals[field.key] += val;
     }
@@ -354,6 +354,24 @@ async function generateExistencias(allRows, mesKey) {
       row.getCell(c).border = borderThin;
     }
   });
+
+  // Fila adicional: DESTETE EXTERNO (suma de final_mes de las granjas destete)
+  const desteteTotal = (desteteRows || []).reduce(
+    (sum, row) => sum + (Number(row.data.final_mes) || 0), 0
+  );
+  const desteteRow = ws.getRow(3 + EXISTENCIAS_FIELDS.length);
+  desteteRow.getCell(1).value = 'DESTETE EXTERNO';
+  desteteRow.getCell(1).font = labelFont;
+  desteteRow.getCell(1).border = borderThin;
+  const desteteCell = desteteRow.getCell(col);
+  desteteCell.value = desteteTotal;
+  desteteCell.font = dataFont;
+  desteteCell.alignment = { horizontal: 'center' };
+  desteteCell.border = borderThin;
+  desteteCell.numFmt = '#,##0';
+  for (let c = 2; c <= 13; c++) {
+    desteteRow.getCell(c).border = borderThin;
+  }
 
   const buffer = await wb.xlsx.writeBuffer();
   return Buffer.from(buffer);
@@ -458,11 +476,14 @@ export default async function handler(req, res) {
       const totalGranjas = parseInt(countResult[0].total, 10);
 
       if (totalGranjas >= TOTAL_GRANJAS) {
-        const allRows = await sql`
+        const madresRows = await sql`
           SELECT granja, data FROM inventario
           WHERE mes = ${data.mes} AND granja = ANY(${GRANJAS_MADRES})`;
+        const desteteRows = await sql`
+          SELECT granja, data FROM inventario
+          WHERE mes = ${data.mes} AND granja = ANY(${GRANJAS_DESTETE})`;
         const mesLabel = getMonthLabel(data.mes);
-        const excelBuffer = await generateExistencias(allRows, data.mes);
+        const excelBuffer = await generateExistencias(madresRows, desteteRows, data.mes);
 
         await resend.emails.send({
           from: 'Final de Mes <finaldemes@premierpigs.com>',
