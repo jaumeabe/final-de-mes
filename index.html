@@ -191,6 +191,26 @@
       color: #b71c1c;
       border: 1px solid #f5a8a8;
     }
+    .msg.info {
+      background: #e8f0fe;
+      color: #1a3a5c;
+      border: 1px solid #a8c4e0;
+    }
+
+    .badge-loaded {
+      display: none;
+      margin-top: 10px;
+      padding: 8px 14px;
+      background: #e8f0fe;
+      color: #1a3a5c;
+      border: 1px solid #a8c4e0;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .hidden { display: none !important; }
   </style>
 </head>
 <body>
@@ -198,7 +218,7 @@
   <div style="text-align:center; margin-bottom:16px;">
     <img src="./public/logo.png" alt="Logo Premier Pigs" style="max-height:80px; width:auto;" />
   </div>
-  <h1>Final de Mes &mdash; Granja</h1>
+  <h1 id="titulo">Final de Mes &mdash; Granja</h1>
 
   <form id="finalMesForm">
 
@@ -208,36 +228,47 @@
         <label for="granja">Granja</label>
         <select id="granja" name="granja" required>
           <option value="" disabled selected>Seleccionar granja...</option>
-          <option>PORCELIBOR</option>
-          <option>CASTELLNOU</option>
-          <option>PI</option>
-          <option>SISALLAR 1</option>
-          <option>SENTERADA</option>
-          <option>SISALLAR 3</option>
-          <option>CASERIO</option>
-          <option>MASIA</option>
-          <option>GRANADELLA</option>
-          <option>FAYON ABUELA</option>
-          <option>INDUSTRIAL</option>
-          <option>CARTUJA 2</option>
-          <option>MARRUGAT</option>
-          <option>SINOGA</option>
-          <option>PASCUALET</option>
-          <option>NOVIPORCI</option>
-          <option>LES SERRES</option>
-          <option>ALFUSPI</option>
-          <option>FUSTERO</option>
-          <option>GUINEU</option>
-          <option>SANTA ROSA</option>
-          <option>GIRALT</option>
-          <option>EL SOLER</option>
-          <option>VENDRELL</option>
-          <option>PORDALL</option>
-          <option>RUBIO</option>
-          <option>ESCODA</option>
-          <option>CARTUJA 1</option>
-          <option>PORDECONA</option>
-          <option>SISALLAR 4</option>
+          <optgroup label="Madres">
+            <option>PORCELIBOR</option>
+            <option>CASTELLNOU</option>
+            <option>PI</option>
+            <option>SISALLAR 1</option>
+            <option>SENTERADA</option>
+            <option>SISALLAR 3</option>
+            <option>CASERIO</option>
+            <option>MASIA</option>
+            <option>GRANADELLA</option>
+            <option>FAYON ABUELA</option>
+            <option>INDUSTRIAL</option>
+            <option>CARTUJA 2</option>
+            <option>MARRUGAT</option>
+            <option>SINOGA</option>
+            <option>PASCUALET</option>
+            <option>NOVIPORCI</option>
+            <option>LES SERRES</option>
+            <option>ALFUSPI</option>
+            <option>FUSTERO</option>
+            <option>GUINEU</option>
+            <option>SANTA ROSA</option>
+            <option>GIRALT</option>
+            <option>EL SOLER</option>
+            <option>VENDRELL</option>
+            <option>PORDALL</option>
+            <option>RUBIO</option>
+            <option>ESCODA</option>
+            <option>CARTUJA 1</option>
+            <option>PORDECONA</option>
+            <option>SISALLAR 4</option>
+          </optgroup>
+          <optgroup label="Destete">
+            <option>CEREALS</option>
+            <option>MAIALS</option>
+            <option>LLOBET</option>
+            <option>INGLES</option>
+            <option>ZAIDIN</option>
+            <option>JAUMANDREU</option>
+            <option>BORGES 1</option>
+          </optgroup>
         </select>
       </div>
       <div class="field-group">
@@ -246,79 +277,100 @@
       </div>
     </div>
 
-    <!-- INVENTARIO -->
-    <div class="section-title">Inventario</div>
-    <table class="form-table">
-      <tr><td>Número de machos</td><td><input type="number" name="num_machos" min="0" /></td></tr>
-      <tr><td>Número de cerdas</td><td><input type="number" name="num_cerdas" min="0" id="num_cerdas" /></td></tr>
-      <tr><td>Número de primerizas</td><td><input type="number" name="num_primerizas" min="0" id="num_primerizas" /></td></tr>
-      <tr style="background:#e8f0fe;"><td style="font-weight:700;">Total</td><td><input type="number" name="total_cerdas_primerizas" id="total_cerdas_primerizas" readonly tabindex="-1" style="background:#e8f0fe;border:none;font-weight:700;" /></td></tr>
-      <tr><td>Lechones maternidad</td><td><input type="number" name="lechones_maternidad" min="0" /></td></tr>
-      <tr><td>Lechones destete</td><td><input type="number" name="lechones_destete" min="0" /></td></tr>
-    </table>
+    <div class="badge-loaded" id="badgeLoaded">Datos guardados cargados — puedes consultar o modificar</div>
 
-    <!-- ENTRADAS -->
-    <div class="section-title">Entradas</div>
-    <table class="form-table">
-      <tr><td>Número primerizas entradas</td><td><input type="number" name="primerizas_entradas" min="0" /></td></tr>
-      <tr><td>Acumulado primerizas</td><td><input type="number" name="acumulado_primerizas" min="0" /></td></tr>
-      <tr><td>Número machos entrados</td><td><input type="number" name="machos_entrados" min="0" /></td></tr>
-    </table>
+    <!-- ============ FORMULARIO MADRES ============ -->
+    <div id="formMadres">
+      <!-- INVENTARIO -->
+      <div class="section-title">Inventario</div>
+      <table class="form-table">
+        <tr><td>Número de machos</td><td><input type="number" name="num_machos" min="0" /></td></tr>
+        <tr><td>Número de cerdas</td><td><input type="number" name="num_cerdas" min="0" id="num_cerdas" /></td></tr>
+        <tr><td>Número de primerizas</td><td><input type="number" name="num_primerizas" min="0" id="num_primerizas" /></td></tr>
+        <tr style="background:#e8f0fe;"><td style="font-weight:700;">Total</td><td><input type="number" name="total_cerdas_primerizas" id="total_cerdas_primerizas" readonly tabindex="-1" style="background:#e8f0fe;border:none;font-weight:700;" /></td></tr>
+        <tr><td>Lechones maternidad</td><td><input type="number" name="lechones_maternidad" min="0" /></td></tr>
+        <tr><td>Lechones destete</td><td><input type="number" name="lechones_destete" min="0" /></td></tr>
+      </table>
 
-    <!-- VENTAS -->
-    <div class="section-title">Ventas</div>
-    <table class="form-table">
-      <tr><td>Venta cerdas</td><td><input type="number" name="venta_cerdas" min="0" /></td></tr>
-      <tr><td>Acumulado venta cerdas</td><td><input type="number" name="acum_venta_cerdas" min="0" /></td></tr>
-      <tr><td>Venta primerizas</td><td><input type="number" name="venta_primerizas" min="0" /></td></tr>
-      <tr><td>Acumulado venta primerizas</td><td><input type="number" name="acum_venta_primerizas" min="0" /></td></tr>
-      <tr><td>Venta lechones parideras</td><td><input type="number" name="venta_lechones_parideras" min="0" /></td></tr>
-      <tr><td>Acumulado venta parideras</td><td><input type="number" name="acum_venta_parideras" min="0" /></td></tr>
-      <tr><td>Venta lechones destete</td><td><input type="number" name="venta_lechones_destete" min="0" /></td></tr>
-      <tr><td>Acumulado venta destete</td><td><input type="number" name="acum_venta_destete" min="0" /></td></tr>
-      <tr><td>Venta tostones</td><td><input type="number" name="venta_tostones" min="0" /></td></tr>
-      <tr><td>Acumulado venta tostones</td><td><input type="number" name="acum_venta_tostones" min="0" /></td></tr>
-    </table>
+      <!-- ENTRADAS -->
+      <div class="section-title">Entradas</div>
+      <table class="form-table">
+        <tr><td>Número primerizas entradas</td><td><input type="number" name="primerizas_entradas" min="0" /></td></tr>
+        <tr><td>Acumulado primerizas</td><td><input type="number" name="acumulado_primerizas" min="0" /></td></tr>
+        <tr><td>Número machos entrados</td><td><input type="number" name="machos_entrados" min="0" /></td></tr>
+      </table>
 
-    <!-- PARTOS Y DESTETE -->
-    <div class="section-title">Partos y Destete</div>
-    <table class="form-table">
-      <tr><td>Número de partos</td><td><input type="number" name="num_partos" min="0" /></td></tr>
-      <tr><td>Lechones nacidos vivos</td><td><input type="number" name="lechones_nacidos_vivos" min="0" /></td></tr>
-      <tr><td>Promedio lechones nacidos vivos</td><td><input type="number" name="prom_nacidos_vivos" min="0" step="0.01" /></td></tr>
-      <tr><td>Número cerdas destetadas</td><td><input type="number" name="cerdas_destetadas" min="0" /></td></tr>
-      <tr><td>Lechones destetados</td><td><input type="number" name="lechones_destetados" min="0" id="lechones_destetados" /></td></tr>
-      <tr><td>Promedio lechones destetados</td><td><input type="number" name="prom_destetados" min="0" step="0.01" /></td></tr>
-      <tr style="background:#e8f0fe;"><td style="font-weight:700;">Entrados en destete propio</td><td><input type="number" name="entrados_destete_propio" id="entrados_destete_propio" readonly tabindex="-1" style="background:#e8f0fe;border:none;font-weight:700;" /></td></tr>
-    </table>
+      <!-- VENTAS -->
+      <div class="section-title">Ventas</div>
+      <table class="form-table">
+        <tr><td>Venta cerdas</td><td><input type="number" name="venta_cerdas" min="0" /></td></tr>
+        <tr><td>Acumulado venta cerdas</td><td><input type="number" name="acum_venta_cerdas" min="0" /></td></tr>
+        <tr><td>Venta primerizas</td><td><input type="number" name="venta_primerizas" min="0" /></td></tr>
+        <tr><td>Acumulado venta primerizas</td><td><input type="number" name="acum_venta_primerizas" min="0" /></td></tr>
+        <tr><td>Venta lechones parideras</td><td><input type="number" name="venta_lechones_parideras" min="0" /></td></tr>
+        <tr><td>Acumulado venta parideras</td><td><input type="number" name="acum_venta_parideras" min="0" /></td></tr>
+        <tr><td>Venta lechones destete</td><td><input type="number" name="venta_lechones_destete" min="0" /></td></tr>
+        <tr><td>Acumulado venta destete</td><td><input type="number" name="acum_venta_destete" min="0" /></td></tr>
+        <tr><td>Venta tostones</td><td><input type="number" name="venta_tostones" min="0" /></td></tr>
+        <tr><td>Acumulado venta tostones</td><td><input type="number" name="acum_venta_tostones" min="0" /></td></tr>
+      </table>
 
-    <!-- CUBRICIONES -->
-    <div class="section-title">Cubriciones</div>
-    <table class="form-table">
-      <tr><td>Cubriciones totales</td><td><input type="number" name="cubriciones_totales" min="0" /></td></tr>
-      <tr>
-        <td>
-          Cubriciones origen conflictivo
-          <div class="note">* más de 7 días destetadas, abortadas, negativas de ecógrafo</div>
-        </td>
-        <td><input type="number" name="cubriciones_conflictivo" min="0" /></td>
-      </tr>
-      <tr><td>Cubiertas por primera vez</td><td><input type="number" name="cubiertas_primera_vez" min="0" /></td></tr>
-    </table>
+      <!-- PARTOS Y DESTETE -->
+      <div class="section-title">Partos y Destete</div>
+      <table class="form-table">
+        <tr><td>Número de partos</td><td><input type="number" name="num_partos" min="0" /></td></tr>
+        <tr><td>Lechones nacidos vivos</td><td><input type="number" name="lechones_nacidos_vivos" min="0" /></td></tr>
+        <tr><td>Promedio lechones nacidos vivos</td><td><input type="number" name="prom_nacidos_vivos" min="0" step="0.01" /></td></tr>
+        <tr><td>Número cerdas destetadas</td><td><input type="number" name="cerdas_destetadas" min="0" /></td></tr>
+        <tr><td>Lechones destetados</td><td><input type="number" name="lechones_destetados" min="0" id="lechones_destetados" /></td></tr>
+        <tr><td>Promedio lechones destetados</td><td><input type="number" name="prom_destetados" min="0" step="0.01" /></td></tr>
+        <tr style="background:#e8f0fe;"><td style="font-weight:700;">Entrados en destete propio</td><td><input type="number" name="entrados_destete_propio" id="entrados_destete_propio" readonly tabindex="-1" style="background:#e8f0fe;border:none;font-weight:700;" /></td></tr>
+      </table>
 
-    <!-- MUERTES Y BAJAS -->
-    <div class="section-title">Muertes y Bajas</div>
-    <table class="form-table">
-      <tr><td>Muerte cerdas</td><td><input type="number" name="muerte_cerdas" min="0" /></td></tr>
-      <tr><td>Acumulado muerte cerdas</td><td><input type="number" name="acum_muerte_cerdas" min="0" /></td></tr>
-      <tr><td>Muerte primerizas</td><td><input type="number" name="muerte_primerizas" min="0" /></td></tr>
-      <tr><td>Acumulado muerte primerizas</td><td><input type="number" name="acum_muerte_primerizas" min="0" /></td></tr>
-      <tr><td>Bajas destete</td><td><input type="number" name="bajas_destete" min="0" /></td></tr>
-      <tr><td>Bajas parideras al mes</td><td><input type="number" name="bajas_parideras" min="0" /></td></tr>
-    </table>
+      <!-- CUBRICIONES -->
+      <div class="section-title">Cubriciones</div>
+      <table class="form-table">
+        <tr><td>Cubriciones totales</td><td><input type="number" name="cubriciones_totales" min="0" /></td></tr>
+        <tr>
+          <td>
+            Cubriciones origen conflictivo
+            <div class="note">* más de 7 días destetadas, abortadas, negativas de ecógrafo</div>
+          </td>
+          <td><input type="number" name="cubriciones_conflictivo" min="0" /></td>
+        </tr>
+        <tr><td>Cubiertas por primera vez</td><td><input type="number" name="cubiertas_primera_vez" min="0" /></td></tr>
+      </table>
+
+      <!-- MUERTES Y BAJAS -->
+      <div class="section-title">Muertes y Bajas</div>
+      <table class="form-table">
+        <tr><td>Muerte cerdas</td><td><input type="number" name="muerte_cerdas" min="0" /></td></tr>
+        <tr><td>Acumulado muerte cerdas</td><td><input type="number" name="acum_muerte_cerdas" min="0" /></td></tr>
+        <tr><td>Muerte primerizas</td><td><input type="number" name="muerte_primerizas" min="0" /></td></tr>
+        <tr><td>Acumulado muerte primerizas</td><td><input type="number" name="acum_muerte_primerizas" min="0" /></td></tr>
+        <tr><td>Bajas destete</td><td><input type="number" name="bajas_destete" min="0" /></td></tr>
+        <tr><td>Bajas parideras al mes</td><td><input type="number" name="bajas_parideras" min="0" /></td></tr>
+      </table>
+    </div>
+
+    <!-- ============ FORMULARIO DESTETE ============ -->
+    <div id="formDestete" class="hidden">
+      <div class="section-title">Inventario Destete</div>
+      <table class="form-table">
+        <tr><td>Existencias inicio mes</td><td><input type="number" name="existencias" min="0" id="d_existencias" /></td></tr>
+        <tr><td>Salidas</td><td><input type="number" name="salidas" min="0" id="d_salidas" /></td></tr>
+        <tr><td>Entradas</td><td><input type="number" name="entradas" min="0" id="d_entradas" /></td></tr>
+        <tr><td>Bajas</td><td><input type="number" name="bajas" min="0" id="d_bajas" /></td></tr>
+        <tr style="background:#e8f0fe;">
+          <td style="font-weight:700;">Final de mes</td>
+          <td><input type="number" name="final_mes" id="d_final_mes" readonly tabindex="-1" style="background:#e8f0fe;border:none;font-weight:700;" /></td>
+        </tr>
+      </table>
+      <div class="note" style="margin-top:8px;">Final de mes = Existencias − Salidas + Entradas − Bajas</div>
+    </div>
 
     <button type="submit" class="btn-submit" id="btnGuardar">Guardar</button>
-    <button type="reset" class="btn-reset">Limpiar formulario</button>
+    <button type="reset" class="btn-reset" id="btnReset">Limpiar formulario</button>
     <div class="msg" id="msgOk">Formulario enviado correctamente a todos los destinatarios.</div>
     <div class="msg" id="msgErr">Error al enviar. Inténtalo de nuevo o avisa al administrador.</div>
 
@@ -326,7 +378,35 @@
 </div>
 
 <script>
-  // Auto-cálculo: Total = cerdas + primerizas
+  const GRANJAS_DESTETE = ['CEREALS','MAIALS','LLOBET','INGLES','ZAIDIN','JAUMANDREU','BORGES 1'];
+
+  const granjaSel = document.getElementById('granja');
+  const mesInput  = document.getElementById('mes');
+  const formMadres = document.getElementById('formMadres');
+  const formDestete = document.getElementById('formDestete');
+  const titulo = document.getElementById('titulo');
+  const badgeLoaded = document.getElementById('badgeLoaded');
+
+  function esDestete() {
+    return GRANJAS_DESTETE.includes(granjaSel.value);
+  }
+
+  function actualizarVistaFormulario() {
+    if (esDestete()) {
+      formMadres.classList.add('hidden');
+      formDestete.classList.remove('hidden');
+      titulo.innerHTML = 'Stock Destete &mdash; Granja';
+      // Quitar required de campos madres y poner en destete
+      formMadres.querySelectorAll('input').forEach(i => i.required = false);
+    } else {
+      formMadres.classList.remove('hidden');
+      formDestete.classList.add('hidden');
+      titulo.innerHTML = 'Final de Mes &mdash; Granja';
+      formDestete.querySelectorAll('input').forEach(i => i.required = false);
+    }
+  }
+
+  // Auto-cálculo madres: Total = cerdas + primerizas
   function calcTotal() {
     const c = Number(document.getElementById('num_cerdas').value) || 0;
     const p = Number(document.getElementById('num_primerizas').value) || 0;
@@ -335,7 +415,7 @@
   document.getElementById('num_cerdas').addEventListener('input', calcTotal);
   document.getElementById('num_primerizas').addEventListener('input', calcTotal);
 
-  // Auto-cálculo: Entrados en destete propio = lechones destetados - venta lechones parideras
+  // Auto-cálculo madres: Entrados destete propio
   function calcDestetePropio() {
     const d = Number(document.getElementById('lechones_destetados').value) || 0;
     const v = Number(document.querySelector('[name="venta_lechones_parideras"]').value) || 0;
@@ -344,9 +424,79 @@
   document.getElementById('lechones_destetados').addEventListener('input', calcDestetePropio);
   document.querySelector('[name="venta_lechones_parideras"]').addEventListener('input', calcDestetePropio);
 
+  // Auto-cálculo destete: Final mes = existencias - salidas + entradas - bajas
+  function calcFinalMes() {
+    const e = Number(document.getElementById('d_existencias').value) || 0;
+    const s = Number(document.getElementById('d_salidas').value) || 0;
+    const en = Number(document.getElementById('d_entradas').value) || 0;
+    const b = Number(document.getElementById('d_bajas').value) || 0;
+    document.getElementById('d_final_mes').value = e - s + en - b;
+  }
+  ['d_existencias','d_salidas','d_entradas','d_bajas'].forEach(id => {
+    document.getElementById(id).addEventListener('input', calcFinalMes);
+  });
+
+  // Vaciar todos los inputs salvo granja+mes
+  function vaciarFormulario() {
+    document.querySelectorAll('#formMadres input, #formDestete input').forEach(i => {
+      i.value = '';
+    });
+  }
+
+  // Precargar valores guardados
+  async function cargarDatosGuardados() {
+    badgeLoaded.style.display = 'none';
+    if (!granjaSel.value || !mesInput.value) return;
+    try {
+      const url = `/api/get?granja=${encodeURIComponent(granjaSel.value)}&mes=${encodeURIComponent(mesInput.value)}`;
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const json = await res.json();
+      vaciarFormulario();
+      if (!json.found) return;
+      const d = json.data || {};
+      // Rellenar campos coincidentes (madres o destete)
+      Object.keys(d).forEach(k => {
+        const el = document.querySelector(`[name="${k}"]`);
+        if (el && el.tagName === 'INPUT') {
+          el.value = d[k];
+        }
+      });
+      // Recalcular totales por si hace falta
+      if (esDestete()) calcFinalMes();
+      else { calcTotal(); calcDestetePropio(); }
+      badgeLoaded.style.display = 'block';
+    } catch (err) {
+      console.error('Error cargando datos guardados:', err);
+    }
+  }
+
+  granjaSel.addEventListener('change', () => {
+    actualizarVistaFormulario();
+    cargarDatosGuardados();
+  });
+  mesInput.addEventListener('change', cargarDatosGuardados);
+
+  document.getElementById('btnReset').addEventListener('click', (e) => {
+    // Permitir reset del navegador y limpiar también la badge
+    setTimeout(() => {
+      badgeLoaded.style.display = 'none';
+      actualizarVistaFormulario();
+    }, 0);
+  });
+
   document.getElementById('finalMesForm').addEventListener('submit', async function(e) {
     e.preventDefault();
-    const data   = Object.fromEntries(new FormData(this).entries());
+    // Solo enviar campos del formulario activo + granja + mes
+    const fd = new FormData();
+    fd.append('granja', granjaSel.value);
+    fd.append('mes', mesInput.value);
+    const activeForm = esDestete() ? formDestete : formMadres;
+    activeForm.querySelectorAll('input[name]').forEach(i => {
+      fd.append(i.name, i.value);
+    });
+    const data = Object.fromEntries(fd.entries());
+
     const btn    = document.getElementById('btnGuardar');
     const msgOk  = document.getElementById('msgOk');
     const msgErr = document.getElementById('msgErr');
@@ -364,7 +514,8 @@
       });
       if (!res.ok) throw new Error('Error del servidor');
       msgOk.style.display = 'block';
-      this.reset();
+      // No vaciamos: dejamos los datos visibles para consulta
+      badgeLoaded.style.display = 'block';
     } catch (err) {
       console.error('Error:', err);
       msgErr.style.display = 'block';
@@ -373,6 +524,9 @@
       btn.textContent = 'Guardar';
     }
   });
+
+  // Inicial
+  actualizarVistaFormulario();
 </script>
 </body>
 </html>

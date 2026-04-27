@@ -9,13 +9,19 @@ const DESTINATARIOS = (process.env.EMAIL_TO || '').split(',').map(e => e.trim())
 
 const TOTAL_GRANJAS = 30;
 
-const GRANJAS_VALIDAS = [
+const GRANJAS_MADRES = [
   'PORCELIBOR','CASTELLNOU','PI','SISALLAR 1','SENTERADA','SISALLAR 3',
   'CASERIO','MASIA','GRANADELLA','FAYON ABUELA','INDUSTRIAL','CARTUJA 2',
   'MARRUGAT','SINOGA','PASCUALET','NOVIPORCI','LES SERRES','ALFUSPI',
   'FUSTERO','GUINEU','SANTA ROSA','GIRALT','EL SOLER','VENDRELL',
   'PORDALL','RUBIO','ESCODA','CARTUJA 1','PORDECONA','SISALLAR 4',
 ];
+
+const GRANJAS_DESTETE = [
+  'CEREALS','MAIALS','LLOBET','INGLES','ZAIDIN','JAUMANDREU','BORGES 1',
+];
+
+const GRANJAS_VALIDAS = [...GRANJAS_MADRES, ...GRANJAS_DESTETE];
 
 const LABELS = {
   num_machos:               'Número de machos',
@@ -64,6 +70,16 @@ const SECTIONS = [
   { title: 'MUERTES Y BAJAS',  fields: ['muerte_cerdas','acum_muerte_cerdas','muerte_primerizas','acum_muerte_primerizas','bajas_destete','bajas_parideras'] },
 ];
 
+const DESTETE_LABELS = {
+  existencias: 'Existencias inicio mes',
+  salidas:     'Salidas',
+  entradas:    'Entradas',
+  bajas:       'Bajas',
+  final_mes:   'Final de mes',
+};
+
+const DESTETE_FIELDS = ['existencias','salidas','entradas','bajas','final_mes'];
+
 // Campos del Excel EXISTENCIAS (filas 3-7 del Excel original)
 const EXISTENCIAS_FIELDS = [
   { key: 'num_machos', label: 'MACHOS' },
@@ -73,10 +89,9 @@ const EXISTENCIAS_FIELDS = [
   { key: 'lechones_destete', label: 'LECHONES DESTETE' },
 ];
 
-// Mapa mes key (2026-01) -> columna Excel (B=2, C=3, ... M=13)
 function getMonthColumn(mesKey) {
   const month = parseInt(mesKey.split('-')[1], 10);
-  return month + 1; // B=2 para enero, C=3 para febrero, etc.
+  return month + 1;
 }
 
 function getMonthLabel(mesKey) {
@@ -86,7 +101,7 @@ function getMonthLabel(mesKey) {
   return `${meses[parseInt(m, 10) - 1]} ${y}`;
 }
 
-function buildHtml(data) {
+function buildHtmlMadres(data) {
   const sectionRows = SECTIONS.map(({ title, fields }) => {
     const rows = fields.map(f => `
       <tr>
@@ -117,6 +132,158 @@ function buildHtml(data) {
   </div>`;
 }
 
+function buildHtmlDestete(data) {
+  const rows = DESTETE_FIELDS.map(f => `
+    <tr>
+      <td style="padding:8px 14px;color:#4a6080;font-size:13px;">${DESTETE_LABELS[f]}</td>
+      <td style="padding:8px 14px;text-align:right;font-weight:600;color:#1a3a5c;font-size:13px;">${data[f] || '—'}</td>
+    </tr>`).join('');
+
+  return `
+  <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #dde3ec;">
+    <div style="background:#1a3a5c;padding:24px 32px;">
+      <h1 style="margin:0;color:#fff;font-size:20px;letter-spacing:0.04em;text-transform:uppercase;">Stock Destete — Granja</h1>
+      <p style="margin:6px 0 0;color:#a8c4e0;font-size:14px;">${data.granja} &nbsp;|&nbsp; ${data.mes}</p>
+    </div>
+    <div style="padding:14px 20px 24px;">
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td colspan="2" style="background:#1a3a5c;color:#fff;font-size:11px;font-weight:700;letter-spacing:0.06em;padding:7px 14px;text-transform:uppercase;">Inventario Destete</td>
+        </tr>
+        ${rows}
+      </table>
+    </div>
+    <div style="background:#f0f2f5;padding:12px 24px;font-size:11px;color:#7a8fa8;text-align:center;">
+      Enviado automáticamente desde el formulario Final de Mes · Premier Pigs
+    </div>
+  </div>`;
+}
+
+async function generateExcelMadres(data) {
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Final de Mes');
+
+  const headerFont = { bold: true, size: 8, name: 'Arial', color: { argb: 'FFFFFFFF' } };
+  const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A3A5C' } };
+  const labelFont = { size: 8, name: 'Arial' };
+  const valueFont = { bold: true, size: 8, name: 'Arial' };
+  const borderThin = {
+    top: { style: 'thin', color: { argb: 'FFB0B0B0' } },
+    bottom: { style: 'thin', color: { argb: 'FFB0B0B0' } },
+    left: { style: 'thin', color: { argb: 'FFB0B0B0' } },
+    right: { style: 'thin', color: { argb: 'FFB0B0B0' } },
+  };
+
+  ws.pageSetup = { fitToPage: true, fitToWidth: 1, fitToHeight: 1, orientation: 'portrait' };
+  ws.properties.defaultRowHeight = 13;
+
+  ws.getColumn(1).width = 26;
+  ws.getColumn(2).width = 14;
+
+  ws.getRow(1).getCell(1).value = `Final de Mes — ${data.granja}`;
+  ws.getRow(1).getCell(1).font = { bold: true, size: 11, name: 'Arial', color: { argb: 'FF1A3A5C' } };
+  ws.mergeCells('A1:B1');
+  ws.getRow(1).height = 20;
+
+  ws.getRow(2).getCell(1).value = `Mes: ${data.mes}`;
+  ws.getRow(2).getCell(1).font = { size: 9, name: 'Arial', color: { argb: 'FF4A6080' } };
+  ws.getRow(2).height = 15;
+
+  let rowIdx = 3;
+  for (const section of SECTIONS) {
+    const sectionRow = ws.getRow(rowIdx);
+    sectionRow.getCell(1).value = section.title;
+    sectionRow.getCell(1).font = headerFont;
+    sectionRow.getCell(1).fill = headerFill;
+    sectionRow.getCell(2).fill = headerFill;
+    sectionRow.getCell(1).border = borderThin;
+    sectionRow.getCell(2).border = borderThin;
+    rowIdx++;
+
+    for (const field of section.fields) {
+      const r = ws.getRow(rowIdx);
+      r.getCell(1).value = LABELS[field];
+      r.getCell(1).font = labelFont;
+      r.getCell(1).border = borderThin;
+      r.getCell(2).value = data[field] ? Number(data[field]) || data[field] : '';
+      r.getCell(2).font = valueFont;
+      r.getCell(2).alignment = { horizontal: 'center' };
+      r.getCell(2).border = borderThin;
+      rowIdx++;
+    }
+  }
+
+  const buf = await wb.xlsx.writeBuffer();
+  return Buffer.from(buf);
+}
+
+async function generateExcelDestete(data) {
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Stock Destete');
+
+  const headerFont = { bold: true, size: 9, name: 'Arial', color: { argb: 'FFFFFFFF' } };
+  const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A3A5C' } };
+  const labelFont = { size: 9, name: 'Arial' };
+  const valueFont = { bold: true, size: 9, name: 'Arial' };
+  const borderThin = {
+    top: { style: 'thin', color: { argb: 'FFB0B0B0' } },
+    bottom: { style: 'thin', color: { argb: 'FFB0B0B0' } },
+    left: { style: 'thin', color: { argb: 'FFB0B0B0' } },
+    right: { style: 'thin', color: { argb: 'FFB0B0B0' } },
+  };
+
+  ws.pageSetup = { fitToPage: true, fitToWidth: 1, fitToHeight: 1, orientation: 'portrait' };
+  ws.properties.defaultRowHeight = 15;
+
+  ws.getColumn(1).width = 22;
+  ws.getColumn(2).width = 14;
+  ws.getColumn(3).width = 14;
+  ws.getColumn(4).width = 14;
+  ws.getColumn(5).width = 14;
+  ws.getColumn(6).width = 14;
+
+  ws.getRow(1).getCell(1).value = `Stock Destete — ${data.granja}`;
+  ws.getRow(1).getCell(1).font = { bold: true, size: 12, name: 'Arial', color: { argb: 'FF1A3A5C' } };
+  ws.mergeCells('A1:F1');
+  ws.getRow(1).height = 22;
+
+  ws.getRow(2).getCell(1).value = `Mes: ${data.mes}`;
+  ws.getRow(2).getCell(1).font = { size: 10, name: 'Arial', color: { argb: 'FF4A6080' } };
+  ws.mergeCells('A2:F2');
+  ws.getRow(2).height = 16;
+
+  // Cabecera tipo Excel histórico: MES | EXISTENCIAS | SALIDAS | ENTRADAS | BAJAS | FINAL DE MES
+  const headers = ['MES','EXISTENCIAS','SALIDAS','ENTRADAS','BAJAS','FINAL DE MES'];
+  const headerRow = ws.getRow(4);
+  headers.forEach((h, i) => {
+    const cell = headerRow.getCell(i + 1);
+    cell.value = h;
+    cell.font = headerFont;
+    cell.fill = headerFill;
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+    cell.border = borderThin;
+  });
+  headerRow.height = 18;
+
+  const dataRow = ws.getRow(5);
+  dataRow.getCell(1).value = data.mes;
+  dataRow.getCell(2).value = Number(data.existencias) || 0;
+  dataRow.getCell(3).value = Number(data.salidas) || 0;
+  dataRow.getCell(4).value = Number(data.entradas) || 0;
+  dataRow.getCell(5).value = Number(data.bajas) || 0;
+  dataRow.getCell(6).value = Number(data.final_mes) || 0;
+  for (let c = 1; c <= 6; c++) {
+    dataRow.getCell(c).font = valueFont;
+    dataRow.getCell(c).alignment = { horizontal: 'center' };
+    dataRow.getCell(c).border = borderThin;
+    if (c >= 2) dataRow.getCell(c).numFmt = '#,##0';
+  }
+  dataRow.height = 18;
+
+  const buf = await wb.xlsx.writeBuffer();
+  return Buffer.from(buf);
+}
+
 async function generateExistencias(allRows, mesKey) {
   const wb = new ExcelJS.Workbook();
   const year = mesKey.split('-')[0];
@@ -143,7 +310,6 @@ async function generateExistencias(allRows, mesKey) {
   ws.getColumn(1).width = 20;
   for (let i = 2; i <= 13; i++) ws.getColumn(i).width = 10;
 
-  // Fila 1: Título EXISTENCIAS + año
   const titleRow = ws.getRow(1);
   titleRow.getCell(2).value = `EXISTENCIAS ${year}`;
   titleRow.getCell(2).font = { bold: true, size: 11, name: 'Arial', color: { argb: 'FF1A3A5C' } };
@@ -151,7 +317,6 @@ async function generateExistencias(allRows, mesKey) {
   titleRow.getCell(2).alignment = { horizontal: 'center', vertical: 'middle' };
   titleRow.height = 20;
 
-  // Fila 2: Meses
   const monthRow = ws.getRow(2);
   for (let i = 0; i < 12; i++) {
     const cell = monthRow.getCell(i + 2);
@@ -163,7 +328,6 @@ async function generateExistencias(allRows, mesKey) {
   }
   monthRow.height = 18;
 
-  // Sumar los valores de todas las granjas para este mes
   const totals = {};
   for (const field of EXISTENCIAS_FIELDS) {
     totals[field.key] = 0;
@@ -173,14 +337,12 @@ async function generateExistencias(allRows, mesKey) {
     }
   }
 
-  // Filas 3-7: Datos de inventario
   EXISTENCIAS_FIELDS.forEach((field, idx) => {
     const row = ws.getRow(3 + idx);
     row.getCell(1).value = field.label;
     row.getCell(1).font = labelFont;
     row.getCell(1).border = borderThin;
 
-    // Rellenar solo la columna del mes correspondiente
     const cell = row.getCell(col);
     cell.value = totals[field.key];
     cell.font = dataFont;
@@ -188,7 +350,6 @@ async function generateExistencias(allRows, mesKey) {
     cell.border = borderThin;
     cell.numFmt = '#,##0';
 
-    // Bordes para todas las columnas de meses
     for (let c = 2; c <= 13; c++) {
       row.getCell(c).border = borderThin;
     }
@@ -217,9 +378,19 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Formato de mes no válido' });
   }
 
-  // Campos calculados automáticamente
-  data.total_cerdas_primerizas = (Number(data.num_cerdas) || 0) + (Number(data.num_primerizas) || 0);
-  data.entrados_destete_propio = (Number(data.lechones_destetados) || 0) - (Number(data.venta_lechones_parideras) || 0);
+  const esDestete = GRANJAS_DESTETE.includes(data.granja);
+  data.tipo = esDestete ? 'destete' : 'madres';
+
+  if (esDestete) {
+    // Calculado: final_mes = existencias - salidas + entradas - bajas
+    data.final_mes = (Number(data.existencias) || 0)
+                   - (Number(data.salidas) || 0)
+                   + (Number(data.entradas) || 0)
+                   - (Number(data.bajas) || 0);
+  } else {
+    data.total_cerdas_primerizas = (Number(data.num_cerdas) || 0) + (Number(data.num_primerizas) || 0);
+    data.entrados_destete_propio = (Number(data.lechones_destetados) || 0) - (Number(data.venta_lechones_parideras) || 0);
+  }
 
   // Guardar en PostgreSQL
   try {
@@ -242,83 +413,33 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Error al guardar los datos' });
   }
 
-  // Generar Excel individual con los datos de la granja
+  // Generar Excel individual
   let excelIndividual;
   try {
-    const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet('Final de Mes');
-
-    const headerFont = { bold: true, size: 8, name: 'Arial', color: { argb: 'FFFFFFFF' } };
-    const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A3A5C' } };
-    const labelFont = { size: 8, name: 'Arial' };
-    const valueFont = { bold: true, size: 8, name: 'Arial' };
-    const borderThin = {
-      top: { style: 'thin', color: { argb: 'FFB0B0B0' } },
-      bottom: { style: 'thin', color: { argb: 'FFB0B0B0' } },
-      left: { style: 'thin', color: { argb: 'FFB0B0B0' } },
-      right: { style: 'thin', color: { argb: 'FFB0B0B0' } },
-    };
-
-    ws.pageSetup = { fitToPage: true, fitToWidth: 1, fitToHeight: 1, orientation: 'portrait' };
-    ws.properties.defaultRowHeight = 13;
-
-    ws.getColumn(1).width = 26;
-    ws.getColumn(2).width = 14;
-
-    // Título
-    ws.getRow(1).getCell(1).value = `Final de Mes — ${data.granja}`;
-    ws.getRow(1).getCell(1).font = { bold: true, size: 11, name: 'Arial', color: { argb: 'FF1A3A5C' } };
-    ws.mergeCells('A1:B1');
-    ws.getRow(1).height = 20;
-
-    ws.getRow(2).getCell(1).value = `Mes: ${data.mes}`;
-    ws.getRow(2).getCell(1).font = { size: 9, name: 'Arial', color: { argb: 'FF4A6080' } };
-    ws.getRow(2).height = 15;
-
-    let rowIdx = 3;
-    for (const section of SECTIONS) {
-      const sectionRow = ws.getRow(rowIdx);
-      sectionRow.getCell(1).value = section.title;
-      sectionRow.getCell(1).font = headerFont;
-      sectionRow.getCell(1).fill = headerFill;
-      sectionRow.getCell(2).fill = headerFill;
-      sectionRow.getCell(1).border = borderThin;
-      sectionRow.getCell(2).border = borderThin;
-      rowIdx++;
-
-      for (const field of section.fields) {
-        const r = ws.getRow(rowIdx);
-        r.getCell(1).value = LABELS[field];
-        r.getCell(1).font = labelFont;
-        r.getCell(1).border = borderThin;
-        r.getCell(2).value = data[field] ? Number(data[field]) || data[field] : '';
-        r.getCell(2).font = valueFont;
-        r.getCell(2).alignment = { horizontal: 'center' };
-        r.getCell(2).border = borderThin;
-        rowIdx++;
-      }
-    }
-
-    const buf = await wb.xlsx.writeBuffer();
-    excelIndividual = Buffer.from(buf);
+    excelIndividual = esDestete ? await generateExcelDestete(data) : await generateExcelMadres(data);
   } catch (xlErr) {
     console.error('Error generando Excel individual:', xlErr);
   }
 
-  // Enviar email individual con Excel adjunto
+  // Enviar email individual
   try {
+    const subject = esDestete
+      ? `Stock Destete — ${data.granja} — ${data.mes}`
+      : `Final de Mes — ${data.granja} — ${data.mes}`;
+    const html = esDestete ? buildHtmlDestete(data) : buildHtmlMadres(data);
+    const filename = esDestete
+      ? `StockDestete_${data.granja}_${data.mes}.xlsx`
+      : `FinalDeMes_${data.granja}_${data.mes}.xlsx`;
+
     const emailOpts = {
       from:    'Final de Mes <finaldemes@premierpigs.com>',
       to:      DESTINATARIOS,
-      subject: `Final de Mes — ${data.granja} — ${data.mes}`,
-      html:    buildHtml(data),
+      subject,
+      html,
     };
     if (excelIndividual) {
       emailOpts.attachments = [
-        {
-          filename: `FinalDeMes_${data.granja}_${data.mes}.xlsx`,
-          content: excelIndividual.toString('base64'),
-        },
+        { filename, content: excelIndividual.toString('base64') },
       ];
     }
     await resend.emails.send(emailOpts);
@@ -327,41 +448,47 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Error al enviar el email' });
   }
 
-  // Comprobar si todas las granjas han enviado este mes
-  try {
-    const countResult = await sql`SELECT COUNT(DISTINCT granja) as total FROM inventario WHERE mes = ${data.mes}`;
-    const totalGranjas = parseInt(countResult[0].total, 10);
+  // Comprobar si todas las granjas de madres han enviado este mes
+  if (!esDestete) {
+    try {
+      const countResult = await sql`
+        SELECT COUNT(DISTINCT granja) as total
+        FROM inventario
+        WHERE mes = ${data.mes} AND granja = ANY(${GRANJAS_MADRES})`;
+      const totalGranjas = parseInt(countResult[0].total, 10);
 
-    if (totalGranjas >= TOTAL_GRANJAS) {
-      // Todas las granjas han enviado -> generar Excel EXISTENCIAS y enviar
-      const allRows = await sql`SELECT granja, data FROM inventario WHERE mes = ${data.mes}`;
-      const mesLabel = getMonthLabel(data.mes);
-      const excelBuffer = await generateExistencias(allRows, data.mes);
+      if (totalGranjas >= TOTAL_GRANJAS) {
+        const allRows = await sql`
+          SELECT granja, data FROM inventario
+          WHERE mes = ${data.mes} AND granja = ANY(${GRANJAS_MADRES})`;
+        const mesLabel = getMonthLabel(data.mes);
+        const excelBuffer = await generateExistencias(allRows, data.mes);
 
-      await resend.emails.send({
-        from: 'Final de Mes <finaldemes@premierpigs.com>',
-        to: DESTINATARIOS,
-        subject: `EXISTENCIAS — Todas las granjas — ${mesLabel}`,
-        html: `
-          <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:500px;margin:0 auto;padding:24px;">
-            <h2 style="color:#1a3a5c;">Existencias Completas</h2>
-            <p style="color:#4a6080;">Todas las <strong>${totalGranjas} granjas</strong> han enviado el inventario de <strong>${mesLabel}</strong>.</p>
-            <p style="color:#4a6080;">Adjunto el Excel de existencias con los totales sumados.</p>
-            <hr style="border:none;border-top:1px solid #dde3ec;margin:20px 0;" />
-            <p style="font-size:12px;color:#7a8fa8;">Enviado automáticamente · Premier Pigs</p>
-          </div>`,
-        attachments: [
-          {
-            filename: `EXISTENCIAS_${data.mes}.xlsx`,
-            content: excelBuffer.toString('base64'),
-          },
-        ],
-      });
+        await resend.emails.send({
+          from: 'Final de Mes <finaldemes@premierpigs.com>',
+          to: DESTINATARIOS,
+          subject: `EXISTENCIAS — Todas las granjas — ${mesLabel}`,
+          html: `
+            <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:500px;margin:0 auto;padding:24px;">
+              <h2 style="color:#1a3a5c;">Existencias Completas</h2>
+              <p style="color:#4a6080;">Todas las <strong>${totalGranjas} granjas</strong> han enviado el inventario de <strong>${mesLabel}</strong>.</p>
+              <p style="color:#4a6080;">Adjunto el Excel de existencias con los totales sumados.</p>
+              <hr style="border:none;border-top:1px solid #dde3ec;margin:20px 0;" />
+              <p style="font-size:12px;color:#7a8fa8;">Enviado automáticamente · Premier Pigs</p>
+            </div>`,
+          attachments: [
+            {
+              filename: `EXISTENCIAS_${data.mes}.xlsx`,
+              content: excelBuffer.toString('base64'),
+            },
+          ],
+        });
 
-      console.log(`Existencias enviadas: ${totalGranjas} granjas para ${data.mes}`);
+        console.log(`Existencias enviadas: ${totalGranjas} granjas para ${data.mes}`);
+      }
+    } catch (summaryErr) {
+      console.error('Error comprobando/enviando existencias:', summaryErr);
     }
-  } catch (summaryErr) {
-    console.error('Error comprobando/enviando existencias:', summaryErr);
   }
 
   return res.status(200).json({ ok: true });
