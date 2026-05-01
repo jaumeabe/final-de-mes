@@ -7,19 +7,23 @@ const sql = neon(process.env.DATABASE_URL);
 
 const DESTINATARIOS = (process.env.EMAIL_TO || '').split(',').map(e => e.trim()).filter(Boolean);
 
-const TOTAL_GRANJAS = 30;
-
 const GRANJAS_MADRES = [
   'PORCELIBOR','CASTELLNOU','PI','SISALLAR 1','SENTERADA','SISALLAR 3',
   'CASERIO','MASIA','GRANADELLA','FAYON ABUELA','INDUSTRIAL','CARTUJA 2',
   'MARRUGAT','SINOGA','PASCUALET','NOVIPORCI','LES SERRES','ALFUSPI',
   'FUSTERO','GUINEU','SANTA ROSA','GIRALT','EL SOLER','VENDRELL',
-  'PORDALL','RUBIO','ESCODA','CARTUJA 1','PORDECONA','SISALLAR 4',
+  'PORDALL','ESCODA','CARTUJA 1','PORDECONA','SISALLAR 4',
 ];
 
 const GRANJAS_DESTETE = [
-  'CEREALS','MAIALS','LLOBET','INGLES','ZAIDIN','JAUMANDREU','BORGES 1',
+  'CEREALS','MAIALS','LLOBET','INGLES','ZAIDIN','JAUMANDREU','BORGES 1','RUBIO',
 ];
+
+// Granjas temporalmente sin animales: no cuentan para el trigger de EXISTENCIAS
+const GRANJAS_PAUSADAS = ['ALFUSPI'];
+
+const GRANJAS_MADRES_ACTIVAS = GRANJAS_MADRES.filter(g => !GRANJAS_PAUSADAS.includes(g));
+const TOTAL_GRANJAS = GRANJAS_MADRES_ACTIVAS.length;
 
 const GRANJAS_VALIDAS = [...GRANJAS_MADRES, ...GRANJAS_DESTETE];
 
@@ -472,7 +476,7 @@ export default async function handler(req, res) {
       const countResult = await sql`
         SELECT COUNT(DISTINCT granja) as total
         FROM inventario
-        WHERE mes = ${data.mes} AND granja = ANY(${GRANJAS_MADRES})`;
+        WHERE mes = ${data.mes} AND granja = ANY(${GRANJAS_MADRES_ACTIVAS})`;
       const totalGranjas = parseInt(countResult[0].total, 10);
 
       if (totalGranjas >= TOTAL_GRANJAS) {
