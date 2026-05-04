@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Estado Granjas — Premier Pigs</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 30px 16px;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      max-width: 680px;
+      width: 100%;
+      padding: 36px 36px 40px;
+    }
+
+    .logo { text-align: center; margin-bottom: 16px; }
+    .logo img { max-height: 70px; width: auto; }
+
+    h1 {
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      color: #1a3a5c;
+      margin-bottom: 24px;
+      text-transform: uppercase;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 28px;
+    }
+
+    .field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      flex: 1;
+    }
+
+    label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #4a6080;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    input[type="month"] {
+      border: 1px solid #c5d1de;
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-size: 0.95rem;
+      color: #1a3a5c;
+      background: #f7f9fc;
+      width: 100%;
+    }
+
+    input[type="month"]:focus {
+      outline: none;
+      border-color: #2e7dd1;
+      box-shadow: 0 0 0 3px rgba(46,125,209,0.12);
+      background: #fff;
+    }
+
+    .btn {
+      padding: 9px 22px;
+      background: #1a3a5c;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #2e5c94; }
+    .btn:disabled { background: #7a9cbf; cursor: not-allowed; }
+
+    .summary {
+      display: none;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: #f7f9fc;
+      border: 1px solid #dde3ec;
+      border-radius: 8px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .stat-card .num {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #1a3a5c;
+    }
+    .stat-card.pendientes .num { color: #b71c1c; }
+    .stat-card.ok .num { color: #1e6b3a; }
+
+    .stat-card .etiqueta {
+      font-size: 0.72rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #4a6080;
+      margin-top: 4px;
+    }
+
+    .section-title {
+      background: #1a3a5c;
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 7px 14px;
+      border-radius: 5px;
+      margin: 0 0 10px;
+    }
+
+    .section-title.rojo { background: #b71c1c; }
+    .section-title.verde { background: #1e6b3a; }
+
+    .granja-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+
+    .chip {
+      padding: 5px 11px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .chip.pendiente {
+      background: #fdecea;
+      color: #b71c1c;
+      border: 1px solid #f5a8a8;
+    }
+    .chip.ok {
+      background: #e6f4ea;
+      color: #1e6b3a;
+      border: 1px solid #a8d5b5;
+    }
+
+    .nada {
+      color: #4a6080;
+      font-size: 0.88rem;
+      padding: 8px 0;
+      font-style: italic;
+    }
+
+    .error-msg {
+      background: #fdecea;
+      color: #b71c1c;
+      border: 1px solid #f5a8a8;
+      border-radius: 7px;
+      padding: 12px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      display: none;
+      margin-bottom: 16px;
+    }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 24px;
+      color: #4a6080;
+      font-size: 0.83rem;
+      text-decoration: none;
+    }
+    .back-link:hover { color: #1a3a5c; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">
+    <img src="./public/logo.png" alt="Logo Premier Pigs" />
+  </div>
+  <h1>Estado de Reportes</h1>
+
+  <div class="controls">
+    <div class="field-group">
+      <label for="mesPicker">Mes</label>
+      <input type="month" id="mesPicker" />
+    </div>
+    <button class="btn" id="btnConsultar">Consultar</button>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="summary" id="summary">
+    <div class="stat-card">
+      <div class="num" id="statTotal">—</div>
+      <div class="etiqueta">Total granjas</div>
+    </div>
+    <div class="stat-card ok">
+      <div class="num" id="statOk">—</div>
+      <div class="etiqueta">Han reportado</div>
+    </div>
+    <div class="stat-card pendientes">
+      <div class="num" id="statPend">—</div>
+      <div class="etiqueta">Pendientes</div>
+    </div>
+  </div>
+
+  <div id="resultados" style="display:none">
+
+    <div class="section-title rojo" id="titPendMadres">Madres pendientes</div>
+    <div class="granja-grid" id="pendMadres"></div>
+
+    <div class="section-title rojo" id="titPendDestete">Destete pendiente</div>
+    <div class="granja-grid" id="pendDestete"></div>
+
+    <div class="section-title verde">Madres reportadas</div>
+    <div class="granja-grid" id="okMadres"></div>
+
+    <div class="section-title verde">Destete reportado</div>
+    <div class="granja-grid" id="okDestete"></div>
+  </div>
+
+  <a href="/" class="back-link">← Volver al formulario</a>
+</div>
+
+<script>
+  const mesInput = document.getElementById('mesPicker');
+  const btnConsultar = document.getElementById('btnConsultar');
+  const errorMsg = document.getElementById('errorMsg');
+  const summary = document.getElementById('summary');
+  const resultados = document.getElementById('resultados');
+
+  // Inicializar con el mes anterior
+  function getPrevMonthValue() {
+    const now = new Date();
+    const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+  }
+  mesInput.value = getPrevMonthValue();
+
+  function chips(container, names, cls) {
+    container.innerHTML = names.length === 0
+      ? '<span class="nada">Ninguna</span>'
+      : names.map(n => `<span class="chip ${cls}">${n}</span>`).join('');
+  }
+
+  async function consultar() {
+    const mes = mesInput.value;
+    if (!mes) return;
+
+    btnConsultar.disabled = true;
+    btnConsultar.textContent = '...';
+    errorMsg.style.display = 'none';
+    summary.style.display = 'none';
+    resultados.style.display = 'none';
+
+    try {
+      const res = await fetch(`/api/pending?mes=${mes}`);
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || 'Error desconocido');
+
+      document.getElementById('statTotal').textContent = data.total;
+      document.getElementById('statOk').textContent = data.totalReportadas;
+      document.getElementById('statPend').textContent = data.totalPendientes;
+      summary.style.display = 'grid';
+
+      chips(document.getElementById('pendMadres'), data.madres.pendientes, 'pendiente');
+      chips(document.getElementById('pendDestete'), data.destete.pendientes, 'pendiente');
+      chips(document.getElementById('okMadres'), data.madres.reportadas, 'ok');
+      chips(document.getElementById('okDestete'), data.destete.reportadas, 'ok');
+
+      document.getElementById('titPendMadres').textContent =
+        `Madres pendientes (${data.madres.pendientes.length})`;
+      document.getElementById('titPendDestete').textContent =
+        `Destete pendiente (${data.destete.pendientes.length})`;
+
+      resultados.style.display = 'block';
+    } catch (err) {
+      errorMsg.textContent = 'Error al consultar: ' + err.message;
+      errorMsg.style.display = 'block';
+    } finally {
+      btnConsultar.disabled = false;
+      btnConsultar.textContent = 'Consultar';
+    }
+  }
+
+  btnConsultar.addEventListener('click', consultar);
+  mesInput.addEventListener('change', consultar);
+
+  // Cargar automáticamente al abrir
+  consultar();
+</script>
+</body>
+</html>
