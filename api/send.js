@@ -412,6 +412,14 @@ export default async function handler(req, res) {
   } else {
     data.total_cerdas_primerizas = (Number(data.num_cerdas) || 0) + (Number(data.num_primerizas) || 0);
     data.entrados_destete_propio = (Number(data.lechones_destetados) || 0) - (Number(data.venta_lechones_parideras) || 0);
+    const numPartos = Number(data.num_partos) || 0;
+    const cerdas_destetadas = Number(data.cerdas_destetadas) || 0;
+    data.prom_nacidos_vivos = numPartos > 0
+      ? ((Number(data.lechones_nacidos_vivos) || 0) / numPartos).toFixed(2)
+      : data.prom_nacidos_vivos || 0;
+    data.prom_destetados = cerdas_destetadas > 0
+      ? ((Number(data.lechones_destetados) || 0) / cerdas_destetadas).toFixed(2)
+      : data.prom_destetados || 0;
   }
 
   // Guardar en PostgreSQL
