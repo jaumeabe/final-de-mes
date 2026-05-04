@@ -19,6 +19,14 @@ function getMonthLabel(mesKey) {
   return `${meses[parseInt(m, 10) - 1]} ${y}`;
 }
 
+function getPreviousMonthKey() {
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+}
+
 export default async function handler(req, res) {
   const authHeader = req.headers['authorization'];
   const isCron = authHeader === `Bearer ${process.env.CRON_SECRET}`;
@@ -28,7 +36,7 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: 'No autorizado' });
   }
 
-  const mesKey = req.query.mes || '2026-03';
+  const mesKey = req.query.mes || getPreviousMonthKey();
 
   if (!/^\d{4}-\d{2}$/.test(mesKey)) {
     return res.status(400).json({ error: 'Formato de mes no válido. Usa YYYY-MM' });
