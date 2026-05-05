@@ -6,6 +6,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 const sql = neon(process.env.DATABASE_URL);
 
 const DESTINATARIOS = (process.env.EMAIL_TO || '').split(',').map(e => e.trim()).filter(Boolean);
+const DESTINATARIOS_EXISTENCIAS = ['timea@premierpigs.com', 'jaume@premierpigs.com', 'jaumejr@premierpigs.com'];
 
 const GRANJAS_MADRES = [
   'PORCELIBOR','CASTELLNOU','PI','SISALLAR 1','SENTERADA','SISALLAR 3',
@@ -491,7 +492,7 @@ export default async function handler(req, res) {
 
         await resend.emails.send({
           from: 'Final de Mes <finaldemes@premierpigs.com>',
-          to: DESTINATARIOS,
+          to: DESTINATARIOS_EXISTENCIAS,
           subject: `EXISTENCIAS — Todas las granjas — ${mesLabel}`,
           html: `
             <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:500px;margin:0 auto;padding:24px;">
