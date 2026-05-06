@@ -23,7 +23,8 @@ const GRANJAS_DESTETE = [
 const GRANJAS_PAUSADAS = ['ALFUSPI'];
 
 const GRANJAS_MADRES_ACTIVAS = GRANJAS_MADRES.filter(g => !GRANJAS_PAUSADAS.includes(g));
-const TOTAL_GRANJAS = GRANJAS_MADRES_ACTIVAS.length;
+const GRANJAS_ACTIVAS = [...GRANJAS_MADRES_ACTIVAS, ...GRANJAS_DESTETE];
+const TOTAL_GRANJAS = GRANJAS_ACTIVAS.length;
 
 const GRANJAS_VALIDAS = [...GRANJAS_MADRES, ...GRANJAS_DESTETE];
 
@@ -478,50 +479,49 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Error al enviar el email' });
   }
 
-  // Comprobar si todas las granjas de madres han enviado este mes
-  if (!esDestete) {
-    try {
-      const countResult = await sql`
-        SELECT COUNT(DISTINCT granja) as total
-        FROM inventario
-        WHERE mes = ${data.mes} AND granja = ANY(${GRANJAS_MADRES_ACTIVAS})`;
-      const totalGranjas = parseInt(countResult[0].total, 10);
+  // Comprobar si todas las granjas (madres activas + destete) han enviado este mes
+  try {
+    const countResult = await sql`
+      SELECT COUNT(DISTINCT granja) as total
+      FROM inventario
+      WHERE mes = ${data.mes} AND granja = ANY(${GRANJAS_ACTIVAS})`;
+    const totalGranjas = parseInt(countResult[0].total, 10);
 
-      if (totalGranjas >= TOTAL_GRANJAS) {
-        const madresRows = await sql`
-          SELECT granja, data FROM inventario
-          WHERE mes = ${data.mes} AND granja = ANY(${GRANJAS_MADRES})`;
-        const desteteRows = await sql`
-          SELECT granja, data FROM inventario
-          WHERE mes = ${data.mes} AND granja = ANY(${GRANJAS_DESTETE})`;
-        const mesLabel = getMonthLabel(data.mes);
-        const excelBuffer = await generateExistencias(madresRows, desteteRows, data.mes);
+    if (totalGranjas >= TOTAL_GRANJAS) {
+      const madresRows = await sql`
+        SELECT granja, data FROM inventario
+        WHERE mes = ${data.mes} AND granja = ANY(${GRANJAS_MADRES})`;
+      const desteteRows = await sql`
+        SELECT granja, data FROM inventario
+        WHERE mes = ${data.mes} AND granja = ANY(${GRANJAS_DESTETE})`;
+      const mesLabel = getMonthLabel(data.mes);
+      const excelBuffer = await generateExistencias(madresRows, desteteRows, data.mes);
 
-        await resend.emails.send({
-          from: 'Final de Mes <finaldemes@premierpigs.com>',
-          to: DESTINATARIOS,
-          subject: `EXISTENCIAS — Todas las granjas — ${mesLabel}`,
-          html: `
-            <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:500px;margin:0 auto;padding:24px;">
-              <h2 style="color:#1a3a5c;">Existencias Completas</h2>
-              <p style="color:#4a6080;">Todas las <strong>${totalGranjas} granjas</strong> han enviado el inventario de <strong>${mesLabel}</strong>.</p>
-              <p style="color:#4a6080;">Adjunto el Excel de existencias con los totales sumados.</p>
-              <hr style="border:none;border-top:1px solid #dde3ec;margin:20px 0;" />
-              <p style="font-size:12px;color:#7a8fa8;">Enviado automáticamente · Premier Pigs</p>
-            </div>`,
-          attachments: [
-            {
-              filename: `EXISTENCIAS_${data.mes}.xlsx`,
-              content: excelBuffer.toString('base64'),
-            },
-          ],
-        });
+      await resend.emails.send({
+        from: 'Final de Mes <finaldemes@premierpigs.com>',
+        to: DESTINATARIOS,
+        subject: `EXISTENCIAS — Todas las granjas — ${mesLabel}`,
+        html: `
+          <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:500px;margin:0 auto;padding:24px;">
+            <h2 style="color:#1a3a5c;">Existencias Completas</h2>
+            <p style="color:#4a6080;">Todas las <strong>${totalGranjas} granjas</strong> han enviado el inventario de <strong>${mesLabel}</strong>.</p>
+            <p style="color:#4a6080;">Madres: <strong>${madresRows.length}</strong> · Destete: <strong>${desteteRows.length}</strong></p>
+            <p style="color:#4a6080;">Adjunto el Excel de existencias con los totales sumados.</p>
+            <hr style="border:none;border-top:1px solid #dde3ec;margin:20px 0;" />
+            <p style="font-size:12px;color:#7a8fa8;">Enviado automáticamente · Premier Pigs</p>
+          </div>`,
+        attachments: [
+          {
+            filename: `EXISTENCIAS_${data.mes}.xlsx`,
+            content: excelBuffer.toString('base64'),
+          },
+        ],
+      });
 
-        console.log(`Existencias enviadas: ${totalGranjas} granjas para ${data.mes}`);
-      }
-    } catch (summaryErr) {
-      console.error('Error comprobando/enviando existencias:', summaryErr);
+      console.log(`Existencias enviadas: ${totalGranjas} granjas para ${data.mes}`);
     }
+  } catch (summaryErr) {
+    console.error('Error comprobando/enviando existencias:', summaryErr);
   }
 
   return res.status(200).json({ ok: true });
