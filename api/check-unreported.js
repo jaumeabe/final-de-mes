@@ -30,7 +30,7 @@ function getPreviousMonthKey() {
 export default async function handler(req, res) {
   const authHeader = req.headers['authorization'];
   const isCron = authHeader === `Bearer ${process.env.CRON_SECRET}`;
-  const isManual = req.query.key === process.env.CRON_SECRET;
+  const isManual = req.query.key === process.env.CRON_SECRET || req.query.key === process.env.ADMIN_PASS;
 
   if (!isCron && !isManual) {
     return res.status(401).json({ error: 'No autorizado' });

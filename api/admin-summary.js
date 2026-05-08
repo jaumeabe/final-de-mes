@@ -244,7 +244,7 @@ export default async function handler(req, res) {
   // ── Auth ────────────────────────────────────────────────
   const { user, pass, mes } = req.query;
   const validUser = ADMIN_USER;
-  const validPass = process.env.CRON_SECRET;
+  const validPass = process.env.ADMIN_PASS || process.env.CRON_SECRET;
 
   if (!user || !pass || user !== validUser || pass !== validPass) {
     return res.status(401).json({ error: 'Credenciales incorrectas' });
