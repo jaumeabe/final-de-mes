@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Estado Granjas — Premier Pigs</title>
+  <title>Admin — Premier Pigs</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -21,7 +21,7 @@
       background: #fff;
       border-radius: 10px;
       box-shadow: 0 4px 24px rgba(0,0,0,0.10);
-      max-width: 680px;
+      max-width: 700px;
       width: 100%;
       padding: 36px 36px 40px;
     }
@@ -39,18 +39,21 @@
       text-transform: uppercase;
     }
 
-    .controls {
+    /* ── Login ─────────────────────────────────────── */
+    #loginPanel { display: block; }
+
+    .login-box {
+      max-width: 340px;
+      margin: 0 auto;
       display: flex;
-      gap: 12px;
-      align-items: flex-end;
-      margin-bottom: 28px;
+      flex-direction: column;
+      gap: 14px;
     }
 
     .field-group {
       display: flex;
       flex-direction: column;
       gap: 4px;
-      flex: 1;
     }
 
     label {
@@ -61,6 +64,8 @@
       letter-spacing: 0.05em;
     }
 
+    input[type="text"],
+    input[type="password"],
     input[type="month"] {
       border: 1px solid #c5d1de;
       border-radius: 6px;
@@ -71,7 +76,7 @@
       width: 100%;
     }
 
-    input[type="month"]:focus {
+    input:focus {
       outline: none;
       border-color: #2e7dd1;
       box-shadow: 0 0 0 3px rgba(46,125,209,0.12);
@@ -79,7 +84,7 @@
     }
 
     .btn {
-      padding: 9px 22px;
+      padding: 10px 24px;
       background: #1a3a5c;
       color: #fff;
       border: none;
@@ -91,9 +96,46 @@
       letter-spacing: 0.04em;
       white-space: nowrap;
       transition: background 0.2s;
+      width: 100%;
     }
     .btn:hover { background: #2e5c94; }
     .btn:disabled { background: #7a9cbf; cursor: not-allowed; }
+
+    .btn-outline {
+      background: #fff;
+      color: #1a3a5c;
+      border: 2px solid #1a3a5c;
+      padding: 9px 22px;
+      width: auto;
+    }
+    .btn-outline:hover { background: #f0f4fa; }
+
+    .btn-green {
+      background: #1e6b3a;
+      padding: 10px 24px;
+      width: auto;
+    }
+    .btn-green:hover { background: #27883f; }
+
+    /* ── Main ──────────────────────────────────────── */
+    #mainPanel { display: none; }
+
+    .top-bar {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .top-bar .field-group { flex: 1; min-width: 160px; }
+
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
 
     .summary {
       display: none;
@@ -109,15 +151,13 @@
       padding: 14px;
       text-align: center;
     }
-
     .stat-card .num {
       font-size: 2rem;
       font-weight: 700;
       color: #1a3a5c;
     }
-    .stat-card.pendientes .num { color: #b71c1c; }
+    .stat-card.pend .num { color: #b71c1c; }
     .stat-card.ok .num { color: #1e6b3a; }
-
     .stat-card .etiqueta {
       font-size: 0.72rem;
       font-weight: 600;
@@ -138,8 +178,7 @@
       border-radius: 5px;
       margin: 0 0 10px;
     }
-
-    .section-title.rojo { background: #b71c1c; }
+    .section-title.rojo  { background: #b71c1c; }
     .section-title.verde { background: #1e6b3a; }
 
     .granja-grid {
@@ -160,7 +199,7 @@
       color: #b71c1c;
       border: 1px solid #f5a8a8;
     }
-    .chip.ok {
+    .chip.enviado {
       background: #e6f4ea;
       color: #1e6b3a;
       border: 1px solid #a8d5b5;
@@ -185,6 +224,8 @@
       margin-bottom: 16px;
     }
 
+    .resultados { display: none; }
+
     .back-link {
       display: block;
       text-align: center;
@@ -194,6 +235,17 @@
       text-decoration: none;
     }
     .back-link:hover { color: #1a3a5c; }
+
+    .logout-link {
+      display: block;
+      text-align: right;
+      font-size: 0.78rem;
+      color: #4a6080;
+      cursor: pointer;
+      margin-bottom: 8px;
+      text-decoration: underline;
+    }
+    .logout-link:hover { color: #b71c1c; }
   </style>
 </head>
 <body>
@@ -201,106 +253,233 @@
   <div class="logo">
     <img src="./public/logo.png" alt="Logo Premier Pigs" />
   </div>
-  <h1>Estado de Reportes</h1>
+  <h1>Área de Admin</h1>
 
-  <div class="controls">
-    <div class="field-group">
-      <label for="mesPicker">Mes</label>
-      <input type="month" id="mesPicker" />
-    </div>
-    <button class="btn" id="btnConsultar">Consultar</button>
-  </div>
-
-  <div class="error-msg" id="errorMsg"></div>
-
-  <div class="summary" id="summary">
-    <div class="stat-card">
-      <div class="num" id="statTotal">—</div>
-      <div class="etiqueta">Total granjas</div>
-    </div>
-    <div class="stat-card ok">
-      <div class="num" id="statOk">—</div>
-      <div class="etiqueta">Han reportado</div>
-    </div>
-    <div class="stat-card pendientes">
-      <div class="num" id="statPend">—</div>
-      <div class="etiqueta">Pendientes</div>
+  <!-- ── Login ───────────────────────────────────── -->
+  <div id="loginPanel">
+    <div class="login-box">
+      <div class="field-group">
+        <label for="loginUser">Usuario</label>
+        <input type="text" id="loginUser" placeholder="admin" autocomplete="username" />
+      </div>
+      <div class="field-group">
+        <label for="loginPass">Contraseña</label>
+        <input type="password" id="loginPass" autocomplete="current-password" />
+      </div>
+      <div class="error-msg" id="loginError">Usuario o contraseña incorrectos</div>
+      <button class="btn" id="btnLogin">Entrar</button>
     </div>
   </div>
 
-  <div id="resultados" style="display:none">
+  <!-- ── Main (visible tras login) ────────────────── -->
+  <div id="mainPanel">
+    <span class="logout-link" id="btnLogout">Cerrar sesión</span>
 
-    <div class="section-title rojo" id="titPendMadres">Madres pendientes</div>
-    <div class="granja-grid" id="pendMadres"></div>
+    <div class="top-bar">
+      <div class="field-group">
+        <label for="mesPicker">Mes</label>
+        <input type="month" id="mesPicker" />
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-outline" id="btnConsultar">Consultar</button>
+        <button class="btn btn-green" id="btnDescargar" style="display:none">⬇ Descargar Excel</button>
+      </div>
+    </div>
 
-    <div class="section-title rojo" id="titPendDestete">Destete pendiente</div>
-    <div class="granja-grid" id="pendDestete"></div>
+    <div class="error-msg" id="errorMsg"></div>
 
-    <div class="section-title verde">Madres reportadas</div>
-    <div class="granja-grid" id="okMadres"></div>
+    <div class="summary" id="summary">
+      <div class="stat-card">
+        <div class="num" id="statTotal">—</div>
+        <div class="etiqueta">Total granjas</div>
+      </div>
+      <div class="stat-card ok">
+        <div class="num" id="statOk">—</div>
+        <div class="etiqueta">Han reportado</div>
+      </div>
+      <div class="stat-card pend">
+        <div class="num" id="statPend">—</div>
+        <div class="etiqueta">Pendientes</div>
+      </div>
+    </div>
 
-    <div class="section-title verde">Destete reportado</div>
-    <div class="granja-grid" id="okDestete"></div>
+    <div class="resultados" id="resultados">
+
+      <div class="section-title rojo" id="titPendMadres">Madres pendientes (0)</div>
+      <div class="granja-grid" id="pendMadres"></div>
+
+      <div class="section-title rojo" id="titPendDestete">Destete pendiente (0)</div>
+      <div class="granja-grid" id="pendDestete"></div>
+
+      <div class="section-title verde" id="titOkMadres">Madres reportadas (0)</div>
+      <div class="granja-grid" id="okMadres"></div>
+
+      <div class="section-title verde" id="titOkDestete">Destete reportado (0)</div>
+      <div class="granja-grid" id="okDestete"></div>
+
+    </div>
   </div>
 
   <a href="/" class="back-link">← Volver al formulario</a>
 </div>
 
 <script>
-  const mesInput = document.getElementById('mesPicker');
-  const btnConsultar = document.getElementById('btnConsultar');
-  const errorMsg = document.getElementById('errorMsg');
-  const summary = document.getElementById('summary');
-  const resultados = document.getElementById('resultados');
+  // ── Listas de granjas (para split madres/destete en cliente) ──
+  const GRANJAS_MADRES = [
+    'PORCELIBOR','CASTELLNOU','PI','SISALLAR 1','SENTERADA','SISALLAR 3',
+    'CASERIO','MASIA','GRANADELLA','FAYON ABUELA','INDUSTRIAL','CARTUJA 2',
+    'MARRUGAT','SINOGA','PASCUALET','NOVIPORCI','LES SERRES','ALFUSPI',
+    'FUSTERO','GUINEU','SANTA ROSA','GIRALT','EL SOLER','VENDRELL',
+    'PORDALL','ESCODA','CARTUJA 1','PORDECONA','SISALLAR 4',
+  ];
+  const GRANJAS_DESTETE = [
+    'CEREALS','MAIALS','LLOBET','INGLES','ZAIDIN','JAUMANDREU','BORGES 1','RUBIO',
+  ];
 
-  // Inicializar con el mes anterior
+  // ── Auth state ─────────────────────────────────────────────────
+  let authUser = '';
+  let authPass = '';
+
+  const loginPanel  = document.getElementById('loginPanel');
+  const mainPanel   = document.getElementById('mainPanel');
+  const loginUserEl = document.getElementById('loginUser');
+  const loginPassEl = document.getElementById('loginPass');
+  const loginError  = document.getElementById('loginError');
+  const btnLogin    = document.getElementById('btnLogin');
+  const btnLogout   = document.getElementById('btnLogout');
+  const mesPicker   = document.getElementById('mesPicker');
+  const btnConsultar = document.getElementById('btnConsultar');
+  const btnDescargar = document.getElementById('btnDescargar');
+  const errorMsg    = document.getElementById('errorMsg');
+  const summaryEl   = document.getElementById('summary');
+  const resultadosEl = document.getElementById('resultados');
+
+  // ── Mes anterior como default ──────────────────────────────────
   function getPrevMonthValue() {
     const now = new Date();
     const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   }
-  mesInput.value = getPrevMonthValue();
+  mesPicker.value = getPrevMonthValue();
 
+  // ── Login ──────────────────────────────────────────────────────
+  async function doLogin() {
+    const user = loginUserEl.value.trim();
+    const pass = loginPassEl.value;
+    if (!user || !pass) { loginError.style.display = 'block'; return; }
+
+    btnLogin.disabled = true;
+    btnLogin.textContent = '...';
+    loginError.style.display = 'none';
+
+    const mes = getPrevMonthValue();
+    try {
+      const res = await fetch(`/api/check-unreported?key=${encodeURIComponent(pass)}&mes=${mes}`);
+      if (!res.ok) throw new Error('auth');
+      // Credenciales válidas
+      authUser = user;
+      authPass = pass;
+      loginPanel.style.display = 'none';
+      mainPanel.style.display  = 'block';
+      consultar();
+    } catch {
+      loginError.style.display = 'block';
+    } finally {
+      btnLogin.disabled = false;
+      btnLogin.textContent = 'Entrar';
+    }
+  }
+
+  btnLogin.addEventListener('click', doLogin);
+  loginPassEl.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+  // ── Logout ─────────────────────────────────────────────────────
+  btnLogout.addEventListener('click', () => {
+    authUser = ''; authPass = '';
+    loginUserEl.value = ''; loginPassEl.value = '';
+    loginError.style.display = 'none';
+    summaryEl.style.display = 'none';
+    resultadosEl.style.display = 'none';
+    btnDescargar.style.display = 'none';
+    loginPanel.style.display = 'block';
+    mainPanel.style.display  = 'none';
+  });
+
+  // ── Helpers ────────────────────────────────────────────────────
   function chips(container, names, cls) {
     container.innerHTML = names.length === 0
       ? '<span class="nada">Ninguna</span>'
       : names.map(n => `<span class="chip ${cls}">${n}</span>`).join('');
   }
 
+  function splitLists(allList, reported, allMadres, allDestete) {
+    const reportedSet = new Set(reported);
+    return {
+      madres: {
+        reportadas: allMadres.filter(g => reportedSet.has(g)),
+        pendientes: allMadres.filter(g => !reportedSet.has(g)),
+      },
+      destete: {
+        reportadas: allDestete.filter(g => reportedSet.has(g)),
+        pendientes: allDestete.filter(g => !reportedSet.has(g)),
+      },
+    };
+  }
+
+  // ── Consultar estado ───────────────────────────────────────────
   async function consultar() {
-    const mes = mesInput.value;
-    if (!mes) return;
+    const mes = mesPicker.value;
+    if (!mes || !authPass) return;
 
     btnConsultar.disabled = true;
     btnConsultar.textContent = '...';
     errorMsg.style.display = 'none';
-    summary.style.display = 'none';
-    resultados.style.display = 'none';
+    summaryEl.style.display = 'none';
+    resultadosEl.style.display = 'none';
+    btnDescargar.style.display = 'none';
 
     try {
-      const res = await fetch(`/api/pending?mes=${mes}`);
+      const res = await fetch(`/api/check-unreported?key=${encodeURIComponent(authPass)}&mes=${mes}`);
       const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al consultar');
 
-      if (!res.ok) throw new Error(data.error || 'Error desconocido');
+      // Stats
+      document.getElementById('statTotal').textContent = data.totalGranjas;
+      document.getElementById('statOk').textContent    = data.reportadas;
+      document.getElementById('statPend').textContent  = data.pendientes;
+      summaryEl.style.display = 'grid';
 
-      document.getElementById('statTotal').textContent = data.total;
-      document.getElementById('statOk').textContent = data.totalReportadas;
-      document.getElementById('statPend').textContent = data.totalPendientes;
-      summary.style.display = 'grid';
+      // Split madres / destete
+      const split = splitLists(
+        [...GRANJAS_MADRES, ...GRANJAS_DESTETE],
+        data.granjasReportadas,
+        GRANJAS_MADRES,
+        GRANJAS_DESTETE
+      );
 
-      chips(document.getElementById('pendMadres'), data.madres.pendientes, 'pendiente');
-      chips(document.getElementById('pendDestete'), data.destete.pendientes, 'pendiente');
-      chips(document.getElementById('okMadres'), data.madres.reportadas, 'ok');
-      chips(document.getElementById('okDestete'), data.destete.reportadas, 'ok');
+      chips(document.getElementById('pendMadres'),  split.madres.pendientes,  'pendiente');
+      chips(document.getElementById('pendDestete'), split.destete.pendientes, 'pendiente');
+      chips(document.getElementById('okMadres'),    split.madres.reportadas,  'enviado');
+      chips(document.getElementById('okDestete'),   split.destete.reportadas, 'enviado');
 
       document.getElementById('titPendMadres').textContent =
-        `Madres pendientes (${data.madres.pendientes.length})`;
+        `Madres pendientes (${split.madres.pendientes.length})`;
       document.getElementById('titPendDestete').textContent =
-        `Destete pendiente (${data.destete.pendientes.length})`;
+        `Destete pendiente (${split.destete.pendientes.length})`;
+      document.getElementById('titOkMadres').textContent =
+        `Madres reportadas (${split.madres.reportadas.length})`;
+      document.getElementById('titOkDestete').textContent =
+        `Destete reportado (${split.destete.reportadas.length})`;
 
-      resultados.style.display = 'block';
+      resultadosEl.style.display = 'block';
+
+      // Mostrar botón descarga si hay datos de madres
+      if (split.madres.reportadas.length > 0) {
+        btnDescargar.style.display = 'inline-block';
+      }
+
     } catch (err) {
-      errorMsg.textContent = 'Error al consultar: ' + err.message;
+      errorMsg.textContent = 'Error: ' + err.message;
       errorMsg.style.display = 'block';
     } finally {
       btnConsultar.disabled = false;
@@ -309,10 +488,15 @@
   }
 
   btnConsultar.addEventListener('click', consultar);
-  mesInput.addEventListener('change', consultar);
+  mesPicker.addEventListener('change', consultar);
 
-  // Cargar automáticamente al abrir
-  consultar();
+  // ── Descargar Excel resumen ─────────────────────────────────────
+  btnDescargar.addEventListener('click', () => {
+    const mes = mesPicker.value;
+    if (!mes || !authPass) return;
+    const url = `/api/admin-summary?user=${encodeURIComponent(authUser)}&pass=${encodeURIComponent(authPass)}&mes=${mes}`;
+    window.location.href = url;
+  });
 </script>
 </body>
 </html>
