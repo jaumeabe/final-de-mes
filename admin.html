@@ -311,11 +311,17 @@
       <div class="section-title rojo" id="titPendDestete">Destete pendiente (0)</div>
       <div class="granja-grid" id="pendDestete"></div>
 
+      <div class="section-title rojo" id="titPendMachos">Machos pendiente (0)</div>
+      <div class="granja-grid" id="pendMachos"></div>
+
       <div class="section-title verde" id="titOkMadres">Madres reportadas (0)</div>
       <div class="granja-grid" id="okMadres"></div>
 
       <div class="section-title verde" id="titOkDestete">Destete reportado (0)</div>
       <div class="granja-grid" id="okDestete"></div>
+
+      <div class="section-title verde" id="titOkMachos">Machos reportado (0)</div>
+      <div class="granja-grid" id="okMachos"></div>
 
     </div>
   </div>
@@ -335,6 +341,7 @@
   const GRANJAS_DESTETE = [
     'CEREALS','MAIALS','LLOBET','INGLES','ZAIDIN','JAUMANDREU','BORGES 1','RUBIO',
   ];
+  const GRANJAS_MACHOS = ['CENTRE ALOS'];
 
   // ── Auth state ─────────────────────────────────────────────────
   let authUser = '';
@@ -412,7 +419,7 @@
       : names.map(n => `<span class="chip ${cls}">${n}</span>`).join('');
   }
 
-  function splitLists(allList, reported, allMadres, allDestete) {
+  function splitLists(allList, reported, allMadres, allDestete, allMachos) {
     const reportedSet = new Set(reported);
     return {
       madres: {
@@ -422,6 +429,10 @@
       destete: {
         reportadas: allDestete.filter(g => reportedSet.has(g)),
         pendientes: allDestete.filter(g => !reportedSet.has(g)),
+      },
+      machos: {
+        reportadas: allMachos.filter(g => reportedSet.has(g)),
+        pendientes: allMachos.filter(g => !reportedSet.has(g)),
       },
     };
   }
@@ -451,25 +462,32 @@
 
       // Split madres / destete
       const split = splitLists(
-        [...GRANJAS_MADRES, ...GRANJAS_DESTETE],
+        [...GRANJAS_MADRES, ...GRANJAS_DESTETE, ...GRANJAS_MACHOS],
         data.granjasReportadas,
         GRANJAS_MADRES,
-        GRANJAS_DESTETE
+        GRANJAS_DESTETE,
+        GRANJAS_MACHOS
       );
 
       chips(document.getElementById('pendMadres'),  split.madres.pendientes,  'pendiente');
       chips(document.getElementById('pendDestete'), split.destete.pendientes, 'pendiente');
+      chips(document.getElementById('pendMachos'),  split.machos.pendientes,  'pendiente');
       chips(document.getElementById('okMadres'),    split.madres.reportadas,  'enviado');
       chips(document.getElementById('okDestete'),   split.destete.reportadas, 'enviado');
+      chips(document.getElementById('okMachos'),    split.machos.reportadas,  'enviado');
 
       document.getElementById('titPendMadres').textContent =
         `Madres pendientes (${split.madres.pendientes.length})`;
       document.getElementById('titPendDestete').textContent =
         `Destete pendiente (${split.destete.pendientes.length})`;
+      document.getElementById('titPendMachos').textContent =
+        `Machos pendiente (${split.machos.pendientes.length})`;
       document.getElementById('titOkMadres').textContent =
         `Madres reportadas (${split.madres.reportadas.length})`;
       document.getElementById('titOkDestete').textContent =
         `Destete reportado (${split.destete.reportadas.length})`;
+      document.getElementById('titOkMachos').textContent =
+        `Machos reportado (${split.machos.reportadas.length})`;
 
       resultadosEl.style.display = 'block';
 

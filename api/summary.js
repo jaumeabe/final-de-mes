@@ -27,6 +27,8 @@ const GRANJAS_DESTETE = [
   'CEREALS','MAIALS','LLOBET','INGLES','ZAIDIN','JAUMANDREU','BORGES 1','RUBIO',
 ];
 
+const GRANJAS_MACHOS = ['CENTRE ALOS'];
+
 function getMonthColumn(mesKey) {
   return parseInt(mesKey.split('-')[1], 10) + 1;
 }
@@ -46,7 +48,7 @@ function getPreviousMonthKey() {
   return `${y}-${m}`;
 }
 
-async function generateExistencias(madresRows, desteteRows, mesKey) {
+async function generateExistencias(madresRows, desteteRows, machosRows, mesKey) {
   const wb = new ExcelJS.Workbook();
   const year = mesKey.split('-')[0];
   const ws = wb.addWorksheet(year);
@@ -137,6 +139,24 @@ async function generateExistencias(madresRows, desteteRows, mesKey) {
     desteteRow.getCell(c).border = borderThin;
   }
 
+  // Fila adicional: MACHOS CENTRO (suma de num_machos de las granjas machos)
+  const machosTotal = (machosRows || []).reduce(
+    (sum, row) => sum + (Number(row.data.num_machos) || 0), 0
+  );
+  const machosRow = ws.getRow(3 + EXISTENCIAS_FIELDS.length + 1);
+  machosRow.getCell(1).value = 'MACHOS CENTRO';
+  machosRow.getCell(1).font = labelFont;
+  machosRow.getCell(1).border = borderThin;
+  const machosCell = machosRow.getCell(col);
+  machosCell.value = machosTotal;
+  machosCell.font = dataFont;
+  machosCell.alignment = { horizontal: 'center' };
+  machosCell.border = borderThin;
+  machosCell.numFmt = '#,##0';
+  for (let c = 2; c <= 13; c++) {
+    machosRow.getCell(c).border = borderThin;
+  }
+
   const buffer = await wb.xlsx.writeBuffer();
   return Buffer.from(buffer);
 }
@@ -152,7 +172,7 @@ export default async function handler(req, res) {
 
   const mesKey = req.query.mes || getPreviousMonthKey();
 
-  let madresRows, desteteRows;
+  let madresRows, desteteRows, machosRows;
   try {
     madresRows = await sql`
       SELECT granja, data FROM inventario
@@ -160,18 +180,21 @@ export default async function handler(req, res) {
     desteteRows = await sql`
       SELECT granja, data FROM inventario
       WHERE mes = ${mesKey} AND granja = ANY(${GRANJAS_DESTETE})`;
+    machosRows = await sql`
+      SELECT granja, data FROM inventario
+      WHERE mes = ${mesKey} AND granja = ANY(${GRANJAS_MACHOS})`;
   } catch (dbErr) {
     console.error('Error consultando DB:', dbErr);
     return res.status(500).json({ error: 'Error al consultar la base de datos' });
   }
 
-  const totalReportadas = madresRows.length + desteteRows.length;
+  const totalReportadas = madresRows.length + desteteRows.length + machosRows.length;
   if (totalReportadas === 0) {
     return res.status(200).json({ ok: true, message: 'No hay datos para este mes' });
   }
 
   const mesLabel = getMonthLabel(mesKey);
-  const excelBuffer = await generateExistencias(madresRows, desteteRows, mesKey);
+  const excelBuffer = await generateExistencias(madresRows, desteteRows, machosRows, mesKey);
 
   try {
     await resend.emails.send({
@@ -181,7 +204,7 @@ export default async function handler(req, res) {
       html: `
         <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:500px;margin:0 auto;padding:24px;">
           <h2 style="color:#1a3a5c;">Existencias — ${mesLabel}</h2>
-          <p style="color:#4a6080;">Granjas reportadas: <strong>${totalReportadas}</strong> (madres: ${madresRows.length}, destete: ${desteteRows.length})</p>
+          <p style="color:#4a6080;">Granjas reportadas: <strong>${totalReportadas}</strong> (madres: ${madresRows.length}, destete: ${desteteRows.length}, machos: ${machosRows.length})</p>
           <p style="color:#4a6080;">Adjunto el Excel de existencias con los totales sumados de todas las granjas.</p>
           <hr style="border:none;border-top:1px solid #dde3ec;margin:20px 0;" />
           <p style="font-size:12px;color:#7a8fa8;">Enviado automáticamente · Premier Pigs</p>

@@ -20,14 +20,16 @@ const GRANJAS_DESTETE = [
   'CEREALS','MAIALS','LLOBET','INGLES','ZAIDIN','JAUMANDREU','BORGES 1','RUBIO',
 ];
 
+const GRANJAS_MACHOS = ['CENTRE ALOS'];
+
 // Granjas temporalmente sin animales: no cuentan para el trigger de EXISTENCIAS
 const GRANJAS_PAUSADAS = ['ALFUSPI'];
 
 const GRANJAS_MADRES_ACTIVAS = GRANJAS_MADRES.filter(g => !GRANJAS_PAUSADAS.includes(g));
-const GRANJAS_ACTIVAS = [...GRANJAS_MADRES_ACTIVAS, ...GRANJAS_DESTETE];
+const GRANJAS_ACTIVAS = [...GRANJAS_MADRES_ACTIVAS, ...GRANJAS_DESTETE, ...GRANJAS_MACHOS];
 const TOTAL_GRANJAS = GRANJAS_ACTIVAS.length;
 
-const GRANJAS_VALIDAS = [...GRANJAS_MADRES, ...GRANJAS_DESTETE];
+const GRANJAS_VALIDAS = [...GRANJAS_MADRES, ...GRANJAS_DESTETE, ...GRANJAS_MACHOS];
 
 const LABELS = {
   num_machos:               'Número de machos',
@@ -138,6 +140,30 @@ function buildHtmlMadres(data) {
   </div>`;
 }
 
+function buildHtmlMachos(data) {
+  return `
+  <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:520px;margin:0 auto;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #dde3ec;">
+    <div style="background:#1a3a5c;padding:24px 32px;">
+      <h1 style="margin:0;color:#fff;font-size:20px;letter-spacing:0.04em;text-transform:uppercase;">Inventario Machos — Granja</h1>
+      <p style="margin:6px 0 0;color:#a8c4e0;font-size:14px;">${data.granja} &nbsp;|&nbsp; ${data.mes}</p>
+    </div>
+    <div style="padding:14px 20px 24px;">
+      <table style="width:100%;border-collapse:collapse;">
+        <tr>
+          <td colspan="2" style="background:#1a3a5c;color:#fff;font-size:11px;font-weight:700;letter-spacing:0.06em;padding:7px 14px;text-transform:uppercase;">Inventario</td>
+        </tr>
+        <tr>
+          <td style="padding:8px 14px;color:#4a6080;font-size:13px;">Número de machos</td>
+          <td style="padding:8px 14px;text-align:right;font-weight:600;color:#1a3a5c;font-size:13px;">${data.num_machos || '—'}</td>
+        </tr>
+      </table>
+    </div>
+    <div style="background:#f0f2f5;padding:12px 24px;font-size:11px;color:#7a8fa8;text-align:center;">
+      Enviado automáticamente desde el formulario Final de Mes · Premier Pigs
+    </div>
+  </div>`;
+}
+
 function buildHtmlDestete(data) {
   const rows = DESTETE_FIELDS.map(f => `
     <tr>
@@ -223,6 +249,59 @@ async function generateExcelMadres(data) {
   return Buffer.from(buf);
 }
 
+async function generateExcelMachos(data) {
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet('Inventario Machos');
+
+  const headerFont = { bold: true, size: 9, name: 'Arial', color: { argb: 'FFFFFFFF' } };
+  const headerFill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1A3A5C' } };
+  const labelFont  = { size: 9, name: 'Arial' };
+  const valueFont  = { bold: true, size: 9, name: 'Arial' };
+  const borderThin = {
+    top: { style: 'thin', color: { argb: 'FFB0B0B0' } },
+    bottom: { style: 'thin', color: { argb: 'FFB0B0B0' } },
+    left: { style: 'thin', color: { argb: 'FFB0B0B0' } },
+    right: { style: 'thin', color: { argb: 'FFB0B0B0' } },
+  };
+
+  ws.pageSetup = { fitToPage: true, fitToWidth: 1, fitToHeight: 1, orientation: 'portrait' };
+  ws.getColumn(1).width = 22;
+  ws.getColumn(2).width = 14;
+
+  ws.getRow(1).getCell(1).value = `Inventario Machos — ${data.granja}`;
+  ws.getRow(1).getCell(1).font = { bold: true, size: 12, name: 'Arial', color: { argb: 'FF1A3A5C' } };
+  ws.mergeCells('A1:B1');
+  ws.getRow(1).height = 22;
+
+  ws.getRow(2).getCell(1).value = `Mes: ${data.mes}`;
+  ws.getRow(2).getCell(1).font = { size: 10, name: 'Arial', color: { argb: 'FF4A6080' } };
+  ws.getRow(2).height = 16;
+
+  const secRow = ws.getRow(4);
+  secRow.getCell(1).value = 'INVENTARIO';
+  secRow.getCell(1).font = headerFont;
+  secRow.getCell(1).fill = headerFill;
+  secRow.getCell(2).fill = headerFill;
+  secRow.getCell(1).border = borderThin;
+  secRow.getCell(2).border = borderThin;
+  ws.mergeCells('A4:B4');
+  secRow.height = 18;
+
+  const dataRow = ws.getRow(5);
+  dataRow.getCell(1).value = 'Número de machos';
+  dataRow.getCell(1).font = labelFont;
+  dataRow.getCell(1).border = borderThin;
+  dataRow.getCell(2).value = Number(data.num_machos) || 0;
+  dataRow.getCell(2).font = valueFont;
+  dataRow.getCell(2).alignment = { horizontal: 'center' };
+  dataRow.getCell(2).border = borderThin;
+  dataRow.getCell(2).numFmt = '#,##0';
+  dataRow.height = 16;
+
+  const buf = await wb.xlsx.writeBuffer();
+  return Buffer.from(buf);
+}
+
 async function generateExcelDestete(data) {
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('Stock Destete');
@@ -290,7 +369,7 @@ async function generateExcelDestete(data) {
   return Buffer.from(buf);
 }
 
-async function generateExistencias(madresRows, desteteRows, mesKey) {
+async function generateExistencias(madresRows, desteteRows, machosRows, mesKey) {
   const wb = new ExcelJS.Workbook();
   const year = mesKey.split('-')[0];
   const ws = wb.addWorksheet(year);
@@ -379,6 +458,24 @@ async function generateExistencias(madresRows, desteteRows, mesKey) {
     desteteRow.getCell(c).border = borderThin;
   }
 
+  // Fila adicional: MACHOS CENTRO (suma de num_machos de las granjas machos)
+  const machosTotal = (machosRows || []).reduce(
+    (sum, row) => sum + (Number(row.data.num_machos) || 0), 0
+  );
+  const machosRow = ws.getRow(3 + EXISTENCIAS_FIELDS.length + 1);
+  machosRow.getCell(1).value = 'MACHOS CENTRO';
+  machosRow.getCell(1).font = labelFont;
+  machosRow.getCell(1).border = borderThin;
+  const machosCell = machosRow.getCell(col);
+  machosCell.value = machosTotal;
+  machosCell.font = dataFont;
+  machosCell.alignment = { horizontal: 'center' };
+  machosCell.border = borderThin;
+  machosCell.numFmt = '#,##0';
+  for (let c = 2; c <= 13; c++) {
+    machosRow.getCell(c).border = borderThin;
+  }
+
   const buffer = await wb.xlsx.writeBuffer();
   return Buffer.from(buffer);
 }
@@ -403,7 +500,8 @@ export default async function handler(req, res) {
   }
 
   const esDestete = GRANJAS_DESTETE.includes(data.granja);
-  data.tipo = esDestete ? 'destete' : 'madres';
+  const esMachos  = GRANJAS_MACHOS.includes(data.granja);
+  data.tipo = esDestete ? 'destete' : esMachos ? 'machos' : 'madres';
 
   if (esDestete) {
     // Calculado: bajas = existencias - salidas + entradas - final_mes
@@ -411,6 +509,8 @@ export default async function handler(req, res) {
                - (Number(data.salidas) || 0)
                + (Number(data.entradas) || 0)
                - (Number(data.final_mes) || 0);
+  } else if (esMachos) {
+    // Solo num_machos, sin cálculos adicionales
   } else {
     data.total_cerdas_primerizas = (Number(data.num_cerdas) || 0) + (Number(data.num_primerizas) || 0);
     data.entrados_destete_propio = (Number(data.lechones_destetados) || 0) - (Number(data.venta_lechones_parideras) || 0);
@@ -448,20 +548,24 @@ export default async function handler(req, res) {
   // Generar Excel individual
   let excelIndividual;
   try {
-    excelIndividual = esDestete ? await generateExcelDestete(data) : await generateExcelMadres(data);
+    excelIndividual = esDestete ? await generateExcelDestete(data)
+                    : esMachos  ? await generateExcelMachos(data)
+                    : await generateExcelMadres(data);
   } catch (xlErr) {
     console.error('Error generando Excel individual:', xlErr);
   }
 
   // Enviar email individual
   try {
-    const subject = esDestete
-      ? `Stock Destete — ${data.granja} — ${data.mes}`
-      : `Final de Mes — ${data.granja} — ${data.mes}`;
-    const html = esDestete ? buildHtmlDestete(data) : buildHtmlMadres(data);
-    const filename = esDestete
-      ? `StockDestete_${data.granja}_${data.mes}.xlsx`
-      : `FinalDeMes_${data.granja}_${data.mes}.xlsx`;
+    const subject = esDestete ? `Stock Destete — ${data.granja} — ${data.mes}`
+                  : esMachos  ? `Inventario Machos — ${data.granja} — ${data.mes}`
+                  : `Final de Mes — ${data.granja} — ${data.mes}`;
+    const html = esDestete ? buildHtmlDestete(data)
+               : esMachos  ? buildHtmlMachos(data)
+               : buildHtmlMadres(data);
+    const filename = esDestete ? `StockDestete_${data.granja}_${data.mes}.xlsx`
+                   : esMachos  ? `Machos_${data.granja}_${data.mes}.xlsx`
+                   : `FinalDeMes_${data.granja}_${data.mes}.xlsx`;
 
     const emailOpts = {
       from:    'Final de Mes <finaldemes@premierpigs.com>',
@@ -495,8 +599,11 @@ export default async function handler(req, res) {
       const desteteRows = await sql`
         SELECT granja, data FROM inventario
         WHERE mes = ${data.mes} AND granja = ANY(${GRANJAS_DESTETE})`;
+      const machosRows = await sql`
+        SELECT granja, data FROM inventario
+        WHERE mes = ${data.mes} AND granja = ANY(${GRANJAS_MACHOS})`;
       const mesLabel = getMonthLabel(data.mes);
-      const excelBuffer = await generateExistencias(madresRows, desteteRows, data.mes);
+      const excelBuffer = await generateExistencias(madresRows, desteteRows, machosRows, data.mes);
 
       await resend.emails.send({
         from: 'Final de Mes <finaldemes@premierpigs.com>',
@@ -506,7 +613,7 @@ export default async function handler(req, res) {
           <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:500px;margin:0 auto;padding:24px;">
             <h2 style="color:#1a3a5c;">Existencias Completas</h2>
             <p style="color:#4a6080;">Todas las <strong>${totalGranjas} granjas</strong> han enviado el inventario de <strong>${mesLabel}</strong>.</p>
-            <p style="color:#4a6080;">Madres: <strong>${madresRows.length}</strong> · Destete: <strong>${desteteRows.length}</strong></p>
+            <p style="color:#4a6080;">Madres: <strong>${madresRows.length}</strong> · Destete: <strong>${desteteRows.length}</strong> · Machos: <strong>${machosRows.length}</strong></p>
             <p style="color:#4a6080;">Adjunto el Excel de existencias con los totales sumados.</p>
             <hr style="border:none;border-top:1px solid #dde3ec;margin:20px 0;" />
             <p style="font-size:12px;color:#7a8fa8;">Enviado automáticamente · Premier Pigs</p>

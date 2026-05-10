@@ -283,6 +283,9 @@
             <option>BORGES 1</option>
             <option>RUBIO</option>
           </optgroup>
+          <optgroup label="Machos">
+            <option>CENTRE ALOS</option>
+          </optgroup>
         </select>
       </div>
       <div class="field-group">
@@ -367,6 +370,14 @@
       </table>
     </div>
 
+    <!-- ============ FORMULARIO MACHOS ============ -->
+    <div id="formMachos" class="hidden">
+      <div class="section-title">Inventario Machos</div>
+      <table class="form-table">
+        <tr><td>Número de machos</td><td><input type="number" name="num_machos" min="0" id="m_num_machos" /></td></tr>
+      </table>
+    </div>
+
     <!-- ============ FORMULARIO DESTETE ============ -->
     <div id="formDestete" class="hidden">
       <div class="section-title">Inventario Destete</div>
@@ -393,30 +404,41 @@
 
 <script>
   const GRANJAS_DESTETE = ['CEREALS','MAIALS','LLOBET','INGLES','ZAIDIN','JAUMANDREU','BORGES 1','RUBIO'];
+  const GRANJAS_MACHOS  = ['CENTRE ALOS'];
 
-  const granjaSel = document.getElementById('granja');
-  const mesInput  = document.getElementById('mes');
+  const granjaSel  = document.getElementById('granja');
+  const mesInput   = document.getElementById('mes');
   const formMadres = document.getElementById('formMadres');
   const formDestete = document.getElementById('formDestete');
+  const formMachos  = document.getElementById('formMachos');
   const titulo = document.getElementById('titulo');
   const badgeLoaded = document.getElementById('badgeLoaded');
 
-  function esDestete() {
-    return GRANJAS_DESTETE.includes(granjaSel.value);
-  }
+  function esDestete() { return GRANJAS_DESTETE.includes(granjaSel.value); }
+  function esMachos()  { return GRANJAS_MACHOS.includes(granjaSel.value); }
 
   function actualizarVistaFormulario() {
     if (esDestete()) {
       formMadres.classList.add('hidden');
       formDestete.classList.remove('hidden');
+      formMachos.classList.add('hidden');
       titulo.innerHTML = 'Stock Destete &mdash; Granja';
-      // Quitar required de campos madres y poner en destete
       formMadres.querySelectorAll('input').forEach(i => i.required = false);
+      formMachos.querySelectorAll('input').forEach(i => i.required = false);
+    } else if (esMachos()) {
+      formMadres.classList.add('hidden');
+      formDestete.classList.add('hidden');
+      formMachos.classList.remove('hidden');
+      titulo.innerHTML = 'Inventario Machos &mdash; Granja';
+      formMadres.querySelectorAll('input').forEach(i => i.required = false);
+      formDestete.querySelectorAll('input').forEach(i => i.required = false);
     } else {
       formMadres.classList.remove('hidden');
       formDestete.classList.add('hidden');
+      formMachos.classList.add('hidden');
       titulo.innerHTML = 'Final de Mes &mdash; Granja';
       formDestete.querySelectorAll('input').forEach(i => i.required = false);
+      formMachos.querySelectorAll('input').forEach(i => i.required = false);
     }
   }
 
@@ -475,7 +497,7 @@
 
   // Vaciar todos los inputs salvo granja+mes
   function vaciarFormulario() {
-    document.querySelectorAll('#formMadres input, #formDestete input').forEach(i => {
+    document.querySelectorAll('#formMadres input, #formDestete input, #formMachos input').forEach(i => {
       i.value = '';
     });
   }
@@ -507,7 +529,7 @@
           }
         });
         if (esDestete()) calcBajas();
-        else { calcTotal(); calcDestetePropio(); calcPromedioNacidos(); calcPromedioDestetados(); }
+        else if (!esMachos()) { calcTotal(); calcDestetePropio(); calcPromedioNacidos(); calcPromedioDestetados(); }
         badgeLoaded.textContent = 'Datos guardados cargados — puedes consultar o modificar';
         badgeLoaded.style.display = 'block';
         return;
