@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Informe Productivo — Premier Pigs</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      color: #1a3a5c;
+      padding: 24px 16px;
+    }
+
+    /* ── Barra de control (no se imprime) ── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      max-width: 960px;
+      margin: 0 auto 20px;
+      flex-wrap: wrap;
+    }
+    .toolbar label { font-size: 0.82rem; font-weight: 600; color: #4a6080; text-transform: uppercase; letter-spacing: 0.05em; }
+    .toolbar input[type="month"] {
+      border: 1px solid #c5d1de; border-radius: 6px;
+      padding: 8px 12px; font-size: 0.92rem; color: #1a3a5c; background: #fff;
+    }
+    .btn {
+      padding: 9px 20px; background: #1a3a5c; color: #fff;
+      border: none; border-radius: 6px; font-size: 0.88rem; font-weight: 700;
+      cursor: pointer; text-transform: uppercase; letter-spacing: 0.04em;
+      transition: background 0.2s;
+    }
+    .btn:hover { background: #2e5c94; }
+    .btn.pdf { background: #b71c1c; }
+    .btn.pdf:hover { background: #9a1515; }
+    .btn:disabled { background: #7a9cbf; cursor: not-allowed; }
+    .back { color: #4a6080; font-size: 0.82rem; text-decoration: none; margin-left: auto; }
+    .back:hover { color: #1a3a5c; }
+
+    /* ── Informe ── */
+    .informe {
+      max-width: 960px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      overflow: hidden;
+    }
+
+    .informe-header {
+      background: #1a3a5c;
+      color: #fff;
+      padding: 28px 36px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .informe-header img { height: 56px; filter: brightness(0) invert(1); }
+    .informe-header h1 { font-size: 1.35rem; letter-spacing: 0.05em; text-transform: uppercase; }
+    .informe-header .subtitulo { color: #a8c4e0; font-size: 0.92rem; margin-top: 4px; }
+
+    .informe-body { padding: 28px 36px; }
+
+    /* ── Resumen global ── */
+    .resumen-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+    .kpi {
+      background: #f7f9fc;
+      border: 1px solid #dde3ec;
+      border-radius: 8px;
+      padding: 12px 14px;
+      text-align: center;
+    }
+    .kpi .valor { font-size: 1.6rem; font-weight: 700; color: #1a3a5c; }
+    .kpi .etiq  { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #4a6080; margin-top: 3px; }
+
+    /* ── Secciones ── */
+    .sec-title {
+      background: #1a3a5c; color: #fff;
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.07em;
+      text-transform: uppercase; padding: 7px 14px; border-radius: 5px;
+      margin: 28px 0 12px;
+    }
+    .sec-title.gris { background: #4a6080; }
+
+    /* ── Tabla de totales ── */
+    .tabla-totales {
+      width: 100%; border-collapse: collapse; margin-bottom: 8px;
+      font-size: 0.82rem;
+    }
+    .tabla-totales th {
+      background: #e8edf3; color: #1a3a5c; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.04em;
+      padding: 7px 10px; border-bottom: 2px solid #c5d1de; text-align: left;
+    }
+    .tabla-totales th:not(:first-child) { text-align: right; }
+    .tabla-totales td { padding: 6px 10px; border-bottom: 1px solid #eef1f5; }
+    .tabla-totales td:not(:first-child) { text-align: right; font-weight: 600; }
+    .tabla-totales tr:nth-child(even) td { background: #f7f9fc; }
+    .tabla-totales tr.subtotal td { background: #e8f0fe; font-weight: 700; }
+
+    /* ── Tabla de granjas ── */
+    .wrap-granjas { overflow-x: auto; }
+    .tabla-granjas {
+      width: 100%; border-collapse: collapse; font-size: 0.74rem; margin-bottom: 8px;
+    }
+    .tabla-granjas th {
+      background: #1a3a5c; color: #fff; font-weight: 700;
+      letter-spacing: 0.03em; padding: 6px 8px;
+      border-right: 1px solid #2e5c94; white-space: nowrap;
+    }
+    .tabla-granjas th:first-child { text-align: left; min-width: 100px; }
+    .tabla-granjas th:not(:first-child) { text-align: right; }
+    .tabla-granjas td {
+      padding: 5px 8px; border-bottom: 1px solid #eef1f5;
+      border-right: 1px solid #eef1f5; white-space: nowrap;
+    }
+    .tabla-granjas td:first-child { font-weight: 600; color: #1a3a5c; }
+    .tabla-granjas td:not(:first-child) { text-align: right; }
+    .tabla-granjas tr:nth-child(even) td { background: #f7f9fc; }
+    .tabla-granjas tr.total-row td { background: #e8f0fe; font-weight: 700; border-top: 2px solid #c5d1de; }
+
+    /* ── Footer ── */
+    .informe-footer {
+      background: #f0f2f5; border-top: 1px solid #dde3ec;
+      padding: 12px 36px; font-size: 0.73rem; color: #7a8fa8; text-align: center;
+    }
+
+    /* ── Estado de carga ── */
+    #estado {
+      text-align: center; padding: 40px;
+      color: #4a6080; font-size: 0.95rem; display: none;
+    }
+
+    /* ── Print ── */
+    @media print {
+      body { background: #fff; padding: 0; }
+      .toolbar { display: none; }
+      .informe { box-shadow: none; border-radius: 0; max-width: 100%; }
+      .informe-body { padding: 16px 20px; }
+      .informe-header { padding: 16px 20px; }
+      .sec-title { margin-top: 16px; }
+      .tabla-granjas { font-size: 0.68rem; }
+      .wrap-granjas { overflow: visible; }
+      .kpi .valor { font-size: 1.2rem; }
+      @page { margin: 1cm; size: A4 landscape; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="toolbar" id="toolbar">
+  <label for="mesPicker">Mes</label>
+  <input type="month" id="mesPicker" />
+  <button class="btn" id="btnCargar">Cargar</button>
+  <button class="btn pdf" id="btnPdf" style="display:none" onclick="window.print()">⬇ Guardar PDF</button>
+  <a href="/admin.html" class="back">← Estado granjas</a>
+</div>
+
+<div id="estado">Cargando datos...</div>
+
+<div class="informe" id="informe" style="display:none">
+
+  <div class="informe-header">
+    <img src="./public/logo.png" alt="Premier Pigs" />
+    <div>
+      <h1>Informe Productivo</h1>
+      <div class="subtitulo" id="subtitulo"></div>
+    </div>
+  </div>
+
+  <div class="informe-body">
+
+    <!-- KPIs globales -->
+    <div id="kpis" class="resumen-grid"></div>
+
+    <!-- Totales madres -->
+    <div class="sec-title">Resumen Granjas Madres</div>
+    <table class="tabla-totales" id="tblTotalesMadres">
+      <thead>
+        <tr>
+          <th>Concepto</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyTotalesMadres"></tbody>
+    </table>
+
+    <!-- Detalle por granja — inventario -->
+    <div class="sec-title gris">Inventario por Granja</div>
+    <div class="wrap-granjas">
+      <table class="tabla-granjas" id="tblInventario"></table>
+    </div>
+
+    <!-- Detalle por granja — partos y destete -->
+    <div class="sec-title gris">Partos y Destete por Granja</div>
+    <div class="wrap-granjas">
+      <table class="tabla-granjas" id="tblPartos"></table>
+    </div>
+
+    <!-- Detalle por granja — ventas -->
+    <div class="sec-title gris">Ventas por Granja</div>
+    <div class="wrap-granjas">
+      <table class="tabla-granjas" id="tblVentas"></table>
+    </div>
+
+    <!-- Destete externo -->
+    <div class="sec-title">Destete Externo</div>
+    <table class="tabla-totales" id="tblDestete">
+      <thead>
+        <tr>
+          <th>Granja</th>
+          <th>Existencias</th>
+          <th>Entradas</th>
+          <th>Salidas</th>
+          <th>Bajas</th>
+          <th>Final mes</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyDestete"></tbody>
+    </table>
+
+  </div>
+
+  <div class="informe-footer" id="footerFecha"></div>
+</div>
+
+<script>
+  const N = v => (v == null || v === '') ? '—' : Number(v).toLocaleString('es-ES');
+  const D = v => (v == null || v === '') ? '—' : Number(v).toFixed(2);
+
+  function getPrevMonth() {
+    const now = new Date();
+    const d = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}`;
+  }
+
+  const mesPicker = document.getElementById('mesPicker');
+  mesPicker.value = getPrevMonth();
+
+  function buildGranjaTable(tableEl, headers, rows, totalesRow) {
+    const ths = headers.map(h => `<th>${h}</th>`).join('');
+    const trs = rows.map(r =>
+      `<tr>${r.map((c,i) => `<td>${i===0 ? c : N(c)}</td>`).join('')}</tr>`
+    ).join('');
+    const tots = totalesRow
+      ? `<tr class="total-row">${totalesRow.map((c,i) => `<td>${i===0 ? c : N(c)}</td>`).join('')}</tr>`
+      : '';
+    tableEl.innerHTML = `<thead><tr>${ths}</tr></thead><tbody>${trs}${tots}</tbody>`;
+  }
+
+  async function cargar() {
+    const mes = mesPicker.value;
+    if (!mes) return;
+
+    document.getElementById('estado').style.display = 'block';
+    document.getElementById('estado').textContent = 'Cargando datos...';
+    document.getElementById('informe').style.display = 'none';
+    document.getElementById('btnPdf').style.display = 'none';
+
+    try {
+      const res = await fetch(`/api/informe-data?mes=${mes}`);
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || 'Error');
+
+      const t  = d.totalesMadres;
+      const td = d.totalesDestete;
+
+      document.getElementById('subtitulo').textContent =
+        `${d.mesLabel}  ·  ${d.madres.length} granjas madres  ·  ${d.destete.length} granjas destete`;
+      document.getElementById('footerFecha').textContent =
+        `Generado el ${new Date().toLocaleDateString('es-ES', {day:'2-digit',month:'long',year:'numeric'})} · Premier Pigs`;
+
+      // KPIs
+      const kpis = [
+        { v: N(t.total_cerdas_primerizas), e: 'Cerdas + Primerizas' },
+        { v: N(t.num_machos),              e: 'Machos' },
+        { v: N(t.lechones_maternidad),     e: 'Lechones maternidad' },
+        { v: N(t.lechones_destete),        e: 'Lechones destete' },
+        { v: N(t.num_partos),              e: 'Partos' },
+        { v: D(t.prom_nacidos_vivos),      e: 'Prom. nacidos vivos' },
+        { v: D(t.prom_destetados),         e: 'Prom. destetados' },
+        { v: N(t.cubriciones_totales),     e: 'Cubriciones' },
+        { v: N(td.final_mes),              e: 'Destete externo' },
+      ];
+      document.getElementById('kpis').innerHTML = kpis
+        .map(k => `<div class="kpi"><div class="valor">${k.v}</div><div class="etiq">${k.e}</div></div>`)
+        .join('');
+
+      // Totales madres
+      const filasTotales = [
+        ['Machos', t.num_machos],
+        ['Cerdas', t.num_cerdas],
+        ['Primerizas', t.num_primerizas],
+        ['Total cerdas + primerizas', t.total_cerdas_primerizas],
+        ['Lechones maternidad', t.lechones_maternidad],
+        ['Lechones destete (propio)', t.lechones_destete],
+        ['— Primerizas entradas', t.primerizas_entradas],
+        ['— Machos entrados', t.machos_entrados],
+        ['Partos', t.num_partos],
+        ['Lechones nacidos vivos', t.lechones_nacidos_vivos],
+        ['Promedio nacidos vivos', D(t.prom_nacidos_vivos)],
+        ['Cerdas destetadas', t.cerdas_destetadas],
+        ['Lechones destetados', t.lechones_destetados],
+        ['Promedio destetados', D(t.prom_destetados)],
+        ['Entrados destete propio', t.entrados_destete_propio],
+        ['Cubriciones totales', t.cubriciones_totales],
+        ['— Origen conflictivo', t.cubriciones_conflictivo],
+        ['— Primera vez', t.cubiertas_primera_vez],
+        ['Venta lechones parideras', t.venta_lechones_parideras],
+        ['Venta lechones destete', t.venta_lechones_destete],
+        ['Venta tostones', t.venta_tostones],
+        ['Venta cerdas', t.venta_cerdas],
+        ['Venta primerizas', t.venta_primerizas],
+        ['Muerte cerdas', t.muerte_cerdas],
+        ['Muerte primerizas', t.muerte_primerizas],
+        ['Bajas destete', t.bajas_destete],
+        ['Bajas parideras', t.bajas_parideras],
+      ];
+      document.getElementById('tbodyTotalesMadres').innerHTML = filasTotales
+        .map(([label, val]) => `<tr><td>${label}</td><td>${typeof val === 'string' ? val : N(val)}</td></tr>`)
+        .join('');
+
+      // Inventario por granja
+      const hInv = ['Granja','Machos','Cerdas','Primerizas','Total','L.Maternidad','L.Destete'];
+      const rInv = d.madres.map(g => [
+        g.granja, g.data.num_machos, g.data.num_cerdas, g.data.num_primerizas,
+        g.data.total_cerdas_primerizas, g.data.lechones_maternidad, g.data.lechones_destete,
+      ]);
+      buildGranjaTable(
+        document.getElementById('tblInventario'), hInv, rInv,
+        ['TOTAL', t.num_machos, t.num_cerdas, t.num_primerizas, t.total_cerdas_primerizas, t.lechones_maternidad, t.lechones_destete]
+      );
+
+      // Partos y destete por granja
+      const hP = ['Granja','Partos','Nac.Vivos','Prom.NV','Destetadas','Destetados','Prom.D','Cubriciones'];
+      const rP = d.madres.map(g => [
+        g.granja, g.data.num_partos, g.data.lechones_nacidos_vivos,
+        D(g.data.prom_nacidos_vivos), g.data.cerdas_destetadas, g.data.lechones_destetados,
+        D(g.data.prom_destetados), g.data.cubriciones_totales,
+      ]);
+      buildGranjaTable(
+        document.getElementById('tblPartos'), hP, rP,
+        ['TOTAL', t.num_partos, t.lechones_nacidos_vivos, D(t.prom_nacidos_vivos),
+         t.cerdas_destetadas, t.lechones_destetados, D(t.prom_destetados), t.cubriciones_totales]
+      );
+
+      // Ventas por granja
+      const hV = ['Granja','V.L.Parideras','V.L.Destete','V.Tostones','V.Cerdas','V.Primerizas'];
+      const rV = d.madres.map(g => [
+        g.granja, g.data.venta_lechones_parideras, g.data.venta_lechones_destete,
+        g.data.venta_tostones, g.data.venta_cerdas, g.data.venta_primerizas,
+      ]);
+      buildGranjaTable(
+        document.getElementById('tblVentas'), hV, rV,
+        ['TOTAL', t.venta_lechones_parideras, t.venta_lechones_destete, t.venta_tostones, t.venta_cerdas, t.venta_primerizas]
+      );
+
+      // Destete externo
+      const tbD = document.getElementById('tbodyDestete');
+      let rowsD = d.destete.map(g =>
+        `<tr>
+          <td style="font-weight:600">${g.granja}</td>
+          <td>${N(g.data.existencias)}</td>
+          <td>${N(g.data.entradas)}</td>
+          <td>${N(g.data.salidas)}</td>
+          <td>${N(g.data.bajas)}</td>
+          <td>${N(g.data.final_mes)}</td>
+        </tr>`
+      ).join('');
+      rowsD += `<tr class="subtotal">
+        <td>TOTAL</td>
+        <td>${N(td.existencias)}</td>
+        <td>${N(td.entradas)}</td>
+        <td>${N(td.salidas)}</td>
+        <td>${N(td.bajas)}</td>
+        <td>${N(td.final_mes)}</td>
+      </tr>`;
+      tbD.innerHTML = rowsD;
+
+      document.getElementById('estado').style.display = 'none';
+      document.getElementById('informe').style.display = 'block';
+      document.getElementById('btnPdf').style.display = 'inline-block';
+
+    } catch (err) {
+      document.getElementById('estado').textContent = 'Error: ' + err.message;
+    }
+  }
+
+  document.getElementById('btnCargar').addEventListener('click', cargar);
+  mesPicker.addEventListener('change', cargar);
+  cargar();
+</script>
+</body>
+</html>
