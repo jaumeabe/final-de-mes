@@ -368,6 +368,17 @@
         <tr><td>Bajas destete</td><td><input type="number" name="bajas_destete" min="0" /></td></tr>
         <tr><td>Bajas parideras al mes</td><td><input type="number" name="bajas_parideras" min="0" /></td></tr>
       </table>
+
+      <!-- RESPONSABLES (solo visible si total cerdas+primerizas > 2000) -->
+      <div id="sectionResponsables" class="hidden">
+        <div class="section-title">Responsables</div>
+        <table class="form-table">
+          <tr><td>Encargado de ratas</td><td><input type="text" name="encargado_ratas" /></td></tr>
+          <tr><td>Encargado de vestuario</td><td><input type="text" name="encargado_vestuario" /></td></tr>
+          <tr><td>Encargado tractor</td><td><input type="text" name="encargado_tractor" /></td></tr>
+          <tr><td>Tutor del personal</td><td><input type="text" name="tutor_personal" /></td></tr>
+        </table>
+      </div>
     </div>
 
     <!-- ============ FORMULARIO MACHOS ============ -->
@@ -442,11 +453,13 @@
     }
   }
 
-  // Auto-cálculo madres: Total = cerdas + primerizas
+  // Auto-cálculo madres: Total = cerdas + primerizas + mostrar responsables si >2000
   function calcTotal() {
     const c = Number(document.getElementById('num_cerdas').value) || 0;
     const p = Number(document.getElementById('num_primerizas').value) || 0;
-    document.getElementById('total_cerdas_primerizas').value = c + p;
+    const total = c + p;
+    document.getElementById('total_cerdas_primerizas').value = total;
+    document.getElementById('sectionResponsables').classList.toggle('hidden', total <= 2000);
   }
   document.getElementById('num_cerdas').addEventListener('input', calcTotal);
   document.getElementById('num_primerizas').addEventListener('input', calcTotal);

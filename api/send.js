@@ -78,6 +78,14 @@ const SECTIONS = [
   { title: 'MUERTES Y BAJAS',  fields: ['muerte_cerdas','acum_muerte_cerdas','muerte_primerizas','acum_muerte_primerizas','bajas_destete','bajas_parideras'] },
 ];
 
+const RESPONSABLES_FIELDS = ['encargado_ratas','encargado_vestuario','encargado_tractor','tutor_personal'];
+const RESPONSABLES_LABELS = {
+  encargado_ratas:     'Encargado de ratas',
+  encargado_vestuario: 'Encargado de vestuario',
+  encargado_tractor:   'Encargado tractor',
+  tutor_personal:      'Tutor del personal',
+};
+
 const DESTETE_LABELS = {
   existencias: 'Existencias inicio mes',
   salidas:     'Salidas',
@@ -123,6 +131,17 @@ function buildHtmlMadres(data) {
       ${rows}`;
   }).join('');
 
+  const hasResponsables = RESPONSABLES_FIELDS.some(f => data[f]);
+  const responsablesRows = hasResponsables ? `
+      <tr>
+        <td colspan="2" style="background:#1a3a5c;color:#fff;font-size:11px;font-weight:700;letter-spacing:0.06em;padding:7px 12px;text-transform:uppercase;">RESPONSABLES</td>
+      </tr>
+      ${RESPONSABLES_FIELDS.map(f => `
+      <tr>
+        <td style="padding:6px 12px;color:#4a6080;font-size:13px;">${RESPONSABLES_LABELS[f]}</td>
+        <td style="padding:6px 12px;text-align:right;font-weight:600;color:#1a3a5c;font-size:13px;">${data[f] || '—'}</td>
+      </tr>`).join('')}` : '';
+
   return `
   <div style="font-family:'Segoe UI',Arial,sans-serif;max-width:580px;margin:0 auto;background:#fff;border-radius:10px;overflow:hidden;border:1px solid #dde3ec;">
     <div style="background:#1a3a5c;padding:24px 32px;">
@@ -132,6 +151,7 @@ function buildHtmlMadres(data) {
     <div style="padding:8px 20px 24px;">
       <table style="width:100%;border-collapse:collapse;">
         ${sectionRows}
+        ${responsablesRows}
       </table>
     </div>
     <div style="background:#f0f2f5;padding:12px 24px;font-size:11px;color:#7a8fa8;text-align:center;">
@@ -240,6 +260,31 @@ async function generateExcelMadres(data) {
       r.getCell(2).value = data[field] ? Number(data[field]) || data[field] : '';
       r.getCell(2).font = valueFont;
       r.getCell(2).alignment = { horizontal: 'center' };
+      r.getCell(2).border = borderThin;
+      rowIdx++;
+    }
+  }
+
+  // Sección Responsables (solo si algún campo tiene valor)
+  const hasResponsables = RESPONSABLES_FIELDS.some(f => data[f]);
+  if (hasResponsables) {
+    const secRespRow = ws.getRow(rowIdx);
+    secRespRow.getCell(1).value = 'RESPONSABLES';
+    secRespRow.getCell(1).font = headerFont;
+    secRespRow.getCell(1).fill = headerFill;
+    secRespRow.getCell(2).fill = headerFill;
+    secRespRow.getCell(1).border = borderThin;
+    secRespRow.getCell(2).border = borderThin;
+    rowIdx++;
+
+    for (const field of RESPONSABLES_FIELDS) {
+      const r = ws.getRow(rowIdx);
+      r.getCell(1).value = RESPONSABLES_LABELS[field];
+      r.getCell(1).font = labelFont;
+      r.getCell(1).border = borderThin;
+      r.getCell(2).value = data[field] || '';
+      r.getCell(2).font = { size: 8, name: 'Arial' };
+      r.getCell(2).alignment = { horizontal: 'left' };
       r.getCell(2).border = borderThin;
       rowIdx++;
     }
